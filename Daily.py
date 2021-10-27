@@ -60,7 +60,7 @@ class Daily():
                         header=["證券代號" in l for l in r.text.split("\n")].index(True)-1)
             df = df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors='coerce'))
             df = df[df['本益比'] < 15 ]
-            df.to_csv(f'D:\Dean\python\{date}.xlsx')
+            df.to_csv(f'G:\python\stock\{date}.xlsx')
 
 if __name__ == '__main__':
     D = Daily(20210101, 20211001, 7)
