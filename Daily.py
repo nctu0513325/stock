@@ -3,8 +3,8 @@ import requests
 from io import StringIO
 import pandas as pd
 import re
+import shutil
 # import openpyxl
-
 
 class Daily():
     """Get daily stock data."""
@@ -27,8 +27,6 @@ class Daily():
             month = int(date_tmp.group(2))
             day = int(date_tmp.group(3))
             
-            day += self.gap
-            
             if (month in big_month) and (day > 31):
                 month += 1
                 day = day - 31
@@ -48,36 +46,23 @@ class Daily():
                 
             time_list.append(f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}')
             self.start = f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}'
+
+            day += self.gap
         
         return time_list    
 
     def get_data(self):
         """Get data from twse."""
         date_list = self.date_trans()
+        shutil.mkdir("daily_data")
         for date in date_list:
             r = requests.post(f'https://www.twse.com.tw/exchangeReport/MI_INDEX?response=csv&date={date}&type=ALL')
             df = pd.read_csv(StringIO(r.text.replace("=", "")), 
-                        header=["證券代號" in l for l in r.text.split("\n")].index(True)-1)
+                        header=["證券代號" in l for l in r.text.split("\n")]-1)
             df = df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors='coerce'))
             df = df[df['本益比'] < 15 ]
-            df.to_csv(f'G:\python\stock\{date}.xlsx')
+            df.to_csv(f'daily_data/{date}.csv')
 
 if __name__ == '__main__':
     D = Daily(20210101, 20211001, 7)
     D.get_data()
-
-
-# # 下載股價
-# datestr = "20211001"
-# r = requests.post('https://www.twse.com.tw/exchangeReport/MI_INDEX?response=csv&date=' + datestr + '&type=ALL')
-# # 整理資料，變成表格
-
-# df = pd.read_csv(StringIO(r.text.replace("=", "")), 
-#                           header=["證券代號" in l for l in r.text.split("\n")].index(True)-1)
-# # 整理一些字串：
-# df = df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors='coerce'))
-# mask = (df['本益比'] == 0)
-
-# df = df[df['本益比'] < 15]
-# # 顯示出來
-# print(df)# -*- coding: utf-8 -*-
