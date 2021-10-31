@@ -2,9 +2,7 @@ import numpy as np
 import requests
 from io import StringIO
 import pandas as pd
-import re
-import shutil
-# import openpyxl
+import re, os
 
 class Daily():
     """Get daily stock data."""
@@ -21,7 +19,7 @@ class Daily():
         small_month = [4, 6, 9, 11]
         time_list = []
         
-        while int(self.start) <= int(self.end):
+        while int(self.start) <= int(self.end):           
             date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(self.start))
             year = int(date_tmp.group(1))
             month = int(date_tmp.group(2))
@@ -43,26 +41,30 @@ class Daily():
             if (month > 12):
                 year += 1
                 month = 1
-                
             time_list.append(f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}')
-            self.start = f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}'
-
             day += self.gap
-        
+            self.start = f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}'
+            
         return time_list    
 
     def get_data(self):
         """Get data from twse."""
         date_list = self.date_trans()
-        shutil.mkdir("daily_data")
+        try:
+            os.mkdir("daily_data")
+        except:
+            pass
         for date in date_list:
-            r = requests.post(f'https://www.twse.com.tw/exchangeReport/MI_INDEX?response=csv&date={date}&type=ALL')
-            df = pd.read_csv(StringIO(r.text.replace("=", "")), 
-                        header=["證券代號" in l for l in r.text.split("\n")]-1)
-            df = df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors='coerce'))
-            df = df[df['本益比'] < 15 ]
-            df.to_csv(f'daily_data/{date}.csv')
-
+            try:
+                r = requests.post(f'https://www.twse.com.tw/exchangeReport/MI_INDEX?response=csv&date={date}&type=ALL')
+                df = pd.read_csv(StringIO(r.text.replace("=", "")), 
+                            header=["證券代號" in l for l in r.text.split("\n")].index(True)-1)
+                df = df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors='coerce'))
+                df = df[df['本益比'] < 15 ]
+                df.to_csv(f'daily_data/{date}.csv')
+            except ValueError:
+                print(f'{date} is holiday, no data.')
+                
 if __name__ == '__main__':
-    D = Daily(20210101, 20211001, 7)
+    D = Daily(20210104, 20211001, 7)
     D.get_data()
