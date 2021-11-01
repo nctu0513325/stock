@@ -59,12 +59,12 @@ class Daily():
                 r = requests.post(f'https://www.twse.com.tw/exchangeReport/MI_INDEX?response=csv&date={date}&type=ALL')
                 df = pd.read_csv(StringIO(r.text.replace("=", "")), 
                             header=["證券代號" in l for l in r.text.split("\n")].index(True)-1)
-                df = df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors='coerce'))
+                df = df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors = 'ignore'))
                 df = df[df['本益比'] < 15 ]
                 df.to_csv(f'daily_data/{date}.csv')
             except ValueError:
                 print(f'{date} is holiday, no data.')
                 
 if __name__ == '__main__':
-    D = Daily(20210104, 20211001, 7)
+    D = Daily(20210907, 20210907, 7)
     D.get_data()
