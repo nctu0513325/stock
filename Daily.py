@@ -12,6 +12,7 @@ class Daily():
         self.end = end
         self.gap = gap
         self.daily_data = []
+        self.all_company = []
         
     def date_trans(self) -> list : 
         """Trans time into list to avoid wrong date."""
@@ -61,10 +62,17 @@ class Daily():
                             header=["證券代號" in l for l in r.text.split("\n")].index(True)-1)
                 df = df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors = 'ignore'))
                 df = df[df['本益比'] < 15 ]
-                df.to_csv(f'daily_data/{date}.csv')
+                tmp = []
+                for com_name in df['證券名稱']:
+                    tmp.append(com_name)
+                self.all_company.append(tmp)
+                df.to_csv(f'daily_data/{date}.csv', encoding = 'utf_8_sig')
             except ValueError:
                 print(f'{date} is holiday, no data.')
+        self.candi_company = list(set(self.all_company[0]).intersection(*self.all_company[1:]))
+        print(len(self.candi_company))
+        print(self.candi_company)
                 
 if __name__ == '__main__':
-    D = Daily(20210907, 20210907, 7)
+    D = Daily(20210101, 20211030, 7)
     D.get_data()
