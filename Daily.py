@@ -73,13 +73,10 @@ class Daily():
                 info[0].append('')
                 info_df.columns=info[0]
                 
-                for title in info[0]:
-                    pd.to_numeric(info_df[title], errors = 'ignore')
-                
                 # set stock choosing requirement
-                info_df = info_df[info_df['本益比'] < 15 ]
-                info_df = info_df[info_df['殖利率(%)'] > 4]
-                info_df = info_df[info_df['股價淨值比'] < 2]
+                info_df = info_df[pd.to_numeric(info_df['本益比']) < 15 ]
+                info_df = info_df[pd.to_numeric(info_df['殖利率(%)']) > 4]
+                info_df = info_df[pd.to_numeric(info_df['股價淨值比']) < 2]
                 
                 tmp = []
                 for com_name in info_df['證券名稱']:
