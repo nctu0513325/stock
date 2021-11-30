@@ -68,7 +68,7 @@ class Daily():
                 my_headers = {'user-agent': 'Chrome/45.0.2454.101'}
                 r = requests.get(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date=20210201&selectType=ALL', headers = my_headers)
                 info = r.text.split("\r\n")
-                info = [l.replace('\"','').split(",")[:-1] for l in info[1:-13]]
+                info = [l.replace('\"','').replace("-",-1).replace("+",1).split(",")[:-1] for l in info[1:-13]]
                 info_df = pd.DataFrame(info[1:])
                 info[0].append('')
                 info_df.columns=info[0]
