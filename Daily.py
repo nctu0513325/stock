@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import re, os
 import time
+from collections import defaultdict
 
 class Sel_Candi_Company():
     """Get daily stock data, and list all stock matched with requirements"""
@@ -51,12 +52,12 @@ class Sel_Candi_Company():
 
     def Sel_by_PE_Yeild_PB(self):
         """Get data from twse. PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
-        date_list = self.date_trans()
+        self.date_list = self.date_trans()
         try:
             os.mkdir("daily_data")
         except:
             pass
-        for date in date_list:
+        for date in self.date_list:
             try:                
                 # get data from website and transfer into dataframe
                 requests.adapters.DEFAULT_RETRIES = 5
@@ -97,12 +98,15 @@ class Sel_Candi_Company():
     
     def Sel_by_Closing_Price(self):
         """Get closing price from twse and sel by closing price > ave(60) ave(120) """
-        for company_code in self.candi_company_dic.keys():
-            
-            requests.adapters.DEFAULT_RETRIES = 5
-            time.sleep(5)
-            my_headers={'user-agent': '"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
-            r = requests.get(f'https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=csv&date={date}&stockNo={company_code}', headers = my_headers)          
+        clos_price_all = defaultdict(list)
+        for date in self.date_list:
+            for company_code in self.candi_company_dic.keys():
+                # get each company's closing for all year
+                requests.adapters.DEFAULT_RETRIES = 5
+                time.sleep(5)
+                my_headers={'user-agent': '"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
+                r = requests.get(f'https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=csv&date={date}&stockNo={company_code}', headers = my_headers)
+                   
                 
 if __name__ == '__main__':
     D = Sel_Candi_Company(20200101, 20201231, 7)
