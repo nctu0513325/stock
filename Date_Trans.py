@@ -37,4 +37,4 @@ def date_trans(start, end, gap) -> list :
         day += gap
         start = f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}'
         
-    return time_list_week
+    return time_list_week, time_list_month

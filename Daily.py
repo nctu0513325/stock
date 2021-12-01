@@ -3,6 +3,7 @@ import pandas as pd
 import re, os
 import time
 from collections import defaultdict
+from Date_Trans import date_trans
 
 class Sel_Candi_Company():
     """Get daily stock data, and list all stock matched with requirements"""
@@ -15,44 +16,10 @@ class Sel_Candi_Company():
         self.all_company = []           # each item is a list stored company 
         self.all_company_code = []      # each item is a list stored company code
         self.candi_company_dic = {}     # {$code : $name} for company matched with requirement
-        
-    def date_trans(self) -> list : 
-        """Trans time into list to avoid wrong date."""
-        big_month = [1, 3, 5, 7, 8, 10, 12]
-        small_month = [4, 6, 9, 11]
-        time_list = []
-        
-        while int(self.start) <= int(self.end):           
-            date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(self.start))
-            year = int(date_tmp.group(1))
-            month = int(date_tmp.group(2))
-            day = int(date_tmp.group(3))
-            
-            if (month in big_month) and (day > 31):
-                month += 1
-                day = day - 31
-            elif (month in small_month) and (day > 30):
-                month += 1
-                day = day - 30
-            elif (month == 2):
-                if (int(year) % 4 == 0) and (day > 29):
-                    month += 1
-                    day = day - 29
-                elif (int(year) % 4 != 0) and (day > 28):
-                    month += 1
-                    day = day - 28
-            if (month > 12):
-                year += 1
-                month = 1
-            time_list.append(f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}')
-            day += self.gap
-            self.start = f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}'
-            
-        return time_list    
 
     def Sel_by_PE_Yeild_PB(self):
         """Get data from twse. PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
-        self.date_list = self.date_trans()
+        self.date_list_week, self.date_list_month = date_trans()
         try:
             os.mkdir("daily_data")
         except:
@@ -105,6 +72,10 @@ class Sel_Candi_Company():
                 time.sleep(5)
                 my_headers={'user-agent': '"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
                 r = requests.get(f'https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=csv&date={date}&stockNo={company_code}', headers = my_headers)
+                info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
+                info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
+                info_df = pd.DataFrame(info_dict)
+                
                    
                 
 if __name__ == '__main__':
