@@ -64,8 +64,7 @@ class Sel_Candi_Company():
                 time.sleep(5)
                 my_headers={'user-agent': '"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
                 r = requests.get(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date={date}&selectType=ALL', headers = my_headers)
-                info = r.text.split("\r\n")
-                info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in info[1:-13]]
+                info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
                 info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
                 info_df = pd.DataFrame(info_dict)
                 title = info_df.columns.tolist()    #['證券代號', '證券名稱', '殖利率(%)', '股利年度', '本益比', '股價淨值比', '財報年/季']
@@ -88,7 +87,7 @@ class Sel_Candi_Company():
                 info_df.to_csv(f'daily_data/{date}.csv', encoding = 'utf_8_sig')
             except IndexError:
                 print(f'{date} is holiday, no data.')
-                date_list.remove(date)
+                self.date_list.remove(date)
                 
         self.candi_company = list(set(self.all_company[0]).intersection(*self.all_company[1:]))
         self.candi_company_code = list(set(self.all_company_code[0]).intersection(*self.all_company_code[1:]))
