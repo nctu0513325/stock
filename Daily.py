@@ -1,11 +1,10 @@
-import numpy as np
 import requests
-from io import StringIO
 import pandas as pd
 import re, os
+import time
 
 class Daily():
-    """Get daily stock data, and list all stock which 本益比 < 15"""
+    """Get daily stock data, and list all stock matched with requirement"""
     
     def __init__(self, start, end, gap):
         self.start = start
@@ -57,26 +56,22 @@ class Daily():
         except:
             pass
         for date in date_list:
-            try:
-                # r = requests.get(f'https://www.twse.com.tw/exchangeReport/MI_INDEX?response=csv&date={date}&type=ALL')
-                # df = pd.read_csv(StringIO(r.text.replace("=", "")), 
-                #             header=["證券代號" in l for l in r.text.split("\n")].index(True)-1)
-                # df = df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors = 'ignore'))
-                
-                # get data from website
+            try:                
+                # get data from website and transfer into dataframe
                 requests.adapters.DEFAULT_RETRIES = 5
-                my_headers = {'user-agent': 'Chrome/45.0.2454.101'}
-                r = requests.get(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date=20210201&selectType=ALL', headers = my_headers)
+                time.sleep(5)
+                my_headers={'user-agent': '"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
+                r = requests.get(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date={date}&selectType=ALL', headers = my_headers)
                 info = r.text.split("\r\n")
-                info = [l.replace('\"','').replace("-",-1).replace("+",1).split(",")[:-1] for l in info[1:-13]]
-                info_df = pd.DataFrame(info[1:])
-                info[0].append('')
-                info_df.columns=info[0]
+                info = [l.replace('\"','').replace("-",'-1').replace("+",'1').split(",")[:-1] for l in info[1:-13]]
+                info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
+                info_df = pd.DataFrame(info_dict)
+                title = info_df.columns.tolist()    #['證券代號', '證券名稱', '殖利率(%)', '股利年度', '本益比', '股價淨值比', '財報年/季']
                 
                 # set stock choosing requirement
-                info_df = info_df[pd.to_numeric(info_df['本益比']) < 15 ]
-                info_df = info_df[pd.to_numeric(info_df['殖利率(%)']) > 4]
-                info_df = info_df[pd.to_numeric(info_df['股價淨值比']) < 2]
+                info_df = info_df[pd.to_numeric(info_df[title[4]],errors = 'ignore') < 15 ] #本益比
+                info_df = info_df[pd.to_numeric(info_df[title[2]],errors = 'ignore') > 4]   #殖利率(%)
+                info_df = info_df[pd.to_numeric(info_df[title[5]],errors = 'ignore') < 2]   #股價淨值比
                 
                 tmp = []
                 for com_name in info_df['證券名稱']:
@@ -89,10 +84,11 @@ class Daily():
                 self.all_company_code.append(tmp)
                 
                 info_df.to_csv(f'daily_data/{date}.csv', encoding = 'utf_8_sig')
-            except ValueError:
+            except IndexError:
                 print(f'{date} is holiday, no data.')
         self.candi_company = list(set(self.all_company[0]).intersection(*self.all_company[1:]))
         self.candi_company_code = list(set(self.all_company_code[0]).intersection(*self.all_company_code[1:]))
+        self.candi_company_dic = dict(self.candi_company_code, self.candi_company)
         print(len(self.candi_company))
         print(self.candi_company)
                 
