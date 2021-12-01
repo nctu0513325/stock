@@ -3,16 +3,17 @@ import pandas as pd
 import re, os
 import time
 
-class Daily():
-    """Get daily stock data, and list all stock matched with requirement"""
+class Sel_Candi_Company():
+    """Get daily stock data, and list all stock matched with requirements"""
     
     def __init__(self, start, end, gap):
         self.start = start
         self.end = end
         self.gap = gap
         self.daily_data = []
-        self.all_company = [] #each item is a list stored company 
-        self.all_company_code = [] #each item is a list stored company code
+        self.all_company = []           # each item is a list stored company 
+        self.all_company_code = []      # each item is a list stored company code
+        self.candi_company_dic = {}     # {$code : $name} for company matched with requirement
         
     def date_trans(self) -> list : 
         """Trans time into list to avoid wrong date."""
@@ -48,8 +49,8 @@ class Daily():
             
         return time_list    
 
-    def get_data(self):
-        """Get data from twse."""
+    def Sel_by_PE_Yeild_PB(self):
+        """Get data from twse. PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
         date_list = self.date_trans()
         try:
             os.mkdir("daily_data")
@@ -86,12 +87,23 @@ class Daily():
                 info_df.to_csv(f'daily_data/{date}.csv', encoding = 'utf_8_sig')
             except IndexError:
                 print(f'{date} is holiday, no data.')
+                date_list.remove(date)
+                
         self.candi_company = list(set(self.all_company[0]).intersection(*self.all_company[1:]))
         self.candi_company_code = list(set(self.all_company_code[0]).intersection(*self.all_company_code[1:]))
         self.candi_company_dic = dict(self.candi_company_code, self.candi_company)
         print(len(self.candi_company))
         print(self.candi_company)
+    
+    def Sel_by_Closing_Price(self):
+        """Get closing price from twse and sel by closing price > ave(60) ave(120) """
+        for company_code in self.candi_company_dic.keys():
+            
+            requests.adapters.DEFAULT_RETRIES = 5
+            time.sleep(5)
+            my_headers={'user-agent': '"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
+            r = requests.get(f'https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=csv&date={date}&stockNo={company_code}', headers = my_headers)          
                 
 if __name__ == '__main__':
-    D = Daily(20210101, 20211030, 7)
-    D.get_data()
+    D = Sel_Candi_Company(20200101, 20201231, 7)
+    D.Sel_by_PE_Yeild_PB()
