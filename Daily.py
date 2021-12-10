@@ -1,4 +1,5 @@
 import requests
+import numpy
 import pandas as pd
 import re, os
 import time
@@ -18,10 +19,16 @@ class Sel_Company():
         self.all_company = []           # each item is a list stored company 
         self.all_company_code = []      # each item is a list stored company code
         self.candi_company_dic = {}     # {$code : $name} for company matched with requirement
+    
+    def del_company(self,company_code):
+        try:
+            self.candi_company_code.remove(company_code)
+            self.candi_company.remove(self.candi_company_dic[company_code])
+        except ValueError:
+            pass
 
-    def Select(self):
-        
-        """Get data from twse. select PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
+    def Select(self):        
+        """Get data from twse. select company"""
         self.date_list_week, self.date_list_month = date_trans(self.start, self.end, self.gap)
         try:
             os.mkdir("daily_data")
@@ -39,32 +46,19 @@ class Sel_Company():
                     "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36", #使用者代理
                     "Referer": "https://www.google.com/"  #參照位址
                 }
+        
+        """Get data from twse. select PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
         for date in self.date_list_week:
-            print(date)
             try:                
                 # get data from website and transfer into dataframe
                 requests.adapters.DEFAULT_RETRIES = 5
-                time.sleep(5)  # set sleep time to avoid connection error
+                time.sleep(3)  # set sleep time to avoid connection error
                 requests.session().keep_alive = False
                 r = requests.get(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date={date}&selectType=ALL', headers = my_headers)
                 info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
                 info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
                 info_df = pd.DataFrame(info_dict)
-                
-                # r = request.post(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date={date}&selectType=ALL', headers = my_headers )
-                # info_df = pd.read_csv(StringIO(r.text.replace("=", "")[1:]), 
-                #             header=["證券代號" in l for l in r.text.split("\n")].index(True)-1)
-                # info_df = info_df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors='ignore'))
-                
-                # info = request.urlopen(request.Request(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date={date}&selectType=ALL', headers = my_headers))
-                # print(info.read())
-                # info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in info.read().decode('utf-8').split("\r\n")[1:-13]]
-                # info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
-                # info_df = pd.DataFrame(info_dict)
                 title = info_df.columns.tolist()    #['證券代號', '證券名稱', '殖利率(%)', '股利年度', '本益比', '股價淨值比', '財報年/季']
-                
-                print(title)
-                print(info_df)
 
                 # set stock choosing requirement
                 info_df = info_df[pd.to_numeric(info_df[title[4]],errors = 'ignore') < 15 ]     #本益比
@@ -84,10 +78,6 @@ class Sel_Company():
                 info_df.to_csv(f'daily_data/{date}.csv', encoding = 'utf_8_sig')
             except IndexError:
                 print(f'{date} is holiday, no data.')
-                self.date_list_week.remove(date)
-            # except ValueError:
-            #     print(f'{date} is holiday, no data.')
-            #     self.date_list_week.remove(date)
                 
         self.candi_company = list(set(self.all_company[0]).intersection(*self.all_company[1:]))
         self.candi_company_code = list(set(self.all_company_code[0]).intersection(*self.all_company_code[1:]))
@@ -95,23 +85,63 @@ class Sel_Company():
         print(len(self.candi_company))
         print(self.candi_company)
     
-    
         """Get closing price from twse and sel by closing price > ave(60) ave(120) """
         clos_price_all = defaultdict(list)
-        for date in self.date_list:
+        ave_close_price_60 = defaultdict(list)
+        ave_close_price_120 = defaultdict(list)
+        
+        try:
+            os.mkdir("monthly_data")
+        except:
+            pass
+        self.date_list_month = ['20210101', '20210201', '20210301', '20210401']
+        for date in self.date_list_month:
+            print(date)
             for company_code in self.candi_company_dic.keys():
+                print(company_code)
                 # get each company's closing for all year
                 requests.adapters.DEFAULT_RETRIES = 5
-                time.sleep(5)
+                time.sleep(3)
                 r = requests.get(f'https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=csv&date={date}&stockNo={company_code}', headers = my_headers)
                 info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
                 info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
                 info_df = pd.DataFrame(info_dict)
+                info_df.to_csv(f'monthly_data/{company_code}_{date}.csv', encoding = 'utf_8_sig')
                 
                 # store closing price in dictionary
-                clos_price_all[company_code].append(num for num in list(pd.to_numeric(info_df['收盤價'], error = 'ignore')))
+                try:
+                    clos_price_all[company_code].append(list(pd.to_numeric(info_df['收盤價'], errors = 'ignore')))
+                except KeyError:             
+                    print(info_df)
+                    
+                       
+        for company in clos_price_all.keys():
+            # calculate ave(60)
+            for n in range(0, len(clos_price_all[company])-1):
+                ave_close_price_60[company].append((numpy.mean(clos_price_all[company][n]) + numpy.mean(clos_price_all[company][n+1])) / 2)
+            # calculate ave(120)
+            for n in range(0, len(clos_price_all[company])-3):
+                ave_close_price_120[company].append((numpy.mean(clos_price_all[company][n]) + numpy.mean(clos_price_all[company][n+1]) 
+                                                     + numpy.mean(clos_price_all[company][n+2]) + numpy.mean(clos_price_all[company][n+3])) / 4)
+
+        for company in clos_price_all.keys():
+            for n in range(len(ave_close_price_60[company])):
+                if clos_price_all[company][n+1][-1] < ave_close_price_60[company][n]:
+                    pass
+                else:
+                    self.del_company(company)
+            for n in range(len(ave_close_price_120[company])):
+                if clos_price_all[company][n+3][-1] < ave_close_price_120[company][n]:
+                    pass
+                else:
+                    self.del_company(company)
         
-                
+        self.candi_company_dic = dict(zip(self.candi_company_code, self.candi_company))
+        print(len(self.candi_company))
+        print(self.candi_company)       
+            
+
+        print(clos_price_all)                        
                 
 if __name__ == '__main__':
     D = Sel_Company(20200102, 20201231, 7)
