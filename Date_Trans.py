@@ -13,28 +13,29 @@ def date_trans(start, end, gap) -> list :
         month = int(date_tmp.group(2))
         day = int(date_tmp.group(3))
         
+        if f'{str(year).zfill(4)}{str(month).zfill(2)}01' not in time_list_month:
+            time_list_month.append(f'{str(year).zfill(4)}{str(month).zfill(2)}01')
+        
         if (month in big_month) and (day > 31):
             month += 1
             day = day - 31
-            time_list_month.append(f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}')
         elif (month in small_month) and (day > 30):
             month += 1
             day = day - 30
-            time_list_month.append(f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}')
         elif (month == 2):
             if (int(year) % 4 == 0) and (day > 29):
                 month += 1
                 day = day - 29
-                time_list_month.append(f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}')
             elif (int(year) % 4 != 0) and (day > 28):
                 month += 1
                 day = day - 28
-                time_list_month.append(f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}')
         if (month > 12):
             year += 1
             month = 1
         time_list_week.append(f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}')
         day += gap
         start = f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}'
+    
+    
         
     return time_list_week, time_list_month
