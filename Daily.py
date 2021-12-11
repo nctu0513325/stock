@@ -98,7 +98,7 @@ class Sel_Company():
     
         """Get closing price from twse and sel by closing price > ave(60) ave(120) """
         clos_price_all = defaultdict(list)
-        for date in self.date_list:
+        for date in self.date_list_month:
             for company_code in self.candi_company_dic.keys():
                 # get each company's closing for all year
                 requests.adapters.DEFAULT_RETRIES = 5
