@@ -4,9 +4,7 @@ import pandas as pd
 import re, os
 import time
 from collections import defaultdict
-from io import StringIO
 from Date_Trans import date_trans
-# from fake_useragent import UserAgent
 
 class Sel_Company():
     """Get daily stock data, and list all stock matched with requirements"""
@@ -49,6 +47,7 @@ class Sel_Company():
         
         """Get data from twse. select PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
         for date in self.date_list_week:
+            # print(f'Collecting {date} data from website')
             try:                
                 # get data from website and transfer into dataframe
                 requests.adapters.DEFAULT_RETRIES = 5
@@ -87,7 +86,6 @@ class Sel_Company():
     
         """Get closing price from twse and sel by closing price > ave(60) ave(120) """
         clos_price_all = defaultdict(list)
-
         ave_close_price_60 = defaultdict(list)
         ave_close_price_120 = defaultdict(list)
         
@@ -97,13 +95,13 @@ class Sel_Company():
             pass
         self.date_list_month = ['20210101', '20210201', '20210301', '20210401']
         for date in self.date_list_month:
-            print(date)
+            print(f'Collecting {date} data from website')
 
             for company_code in self.candi_company_dic.keys():
                 print(company_code)
                 # get each company's closing for all year
                 requests.adapters.DEFAULT_RETRIES = 5
-                time.sleep(3)
+                time.sleep(5)
                 r = requests.get(f'https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=csv&date={date}&stockNo={company_code}', headers = my_headers)
                 info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
                 info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
@@ -116,7 +114,6 @@ class Sel_Company():
                 except KeyError:             
                     print(info_df)
                     
-                       
         for company in clos_price_all.keys():
             # calculate ave(60)
             for n in range(0, len(clos_price_all[company])-1):
@@ -142,7 +139,6 @@ class Sel_Company():
         print(len(self.candi_company))
         print(self.candi_company)       
             
-
         print(clos_price_all)                        
                 
 if __name__ == '__main__':

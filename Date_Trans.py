@@ -1,4 +1,5 @@
 import re
+import datetime
 
 def date_trans(start, end, gap) -> list : 
     """Trans time into list to avoid wrong date."""
@@ -35,7 +36,23 @@ def date_trans(start, end, gap) -> list :
         time_list_week.append(f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}')
         day += gap
         start = f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}'
-    
-    
         
     return time_list_week, time_list_month
+
+def time_for_yahoo(start_time, end_time):
+    """Yahoo website need time with special form"""
+    # https://chenchenhouse.com/python002/
+    initial_time_str = datetime.datetime.strptime( '1970-01-01' , '%Y-%m-%d' )
+    
+    date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(start_time))
+    start_time_str = f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'
+    start_time_str = datetime.datetime.strptime( str(start_time_str) , '%Y-%m-%d' )
+    
+    date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(end_time))
+    end_time_str = f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'
+    end_time_str = datetime.datetime.strptime( str(end_time_str) , '%Y-%m-%d' )
+    
+    period_1 = (start_time_str - initial_time_str).days * (24 * 60 * 60 )
+    period_2 = (end_time_str - initial_time_str).days * (24 * 60 * 60 )
+    
+    return period_1, period_2
