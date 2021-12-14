@@ -5,6 +5,7 @@ import re, os
 import time
 from collections import defaultdict
 from Date_Trans import date_trans, time_for_yahoo
+import sqlite3
 
 class Sel_Company():
     """Get daily stock data, and list all stock matched with requirements"""
@@ -100,6 +101,16 @@ class Sel_Company():
             info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
             info_df = pd.DataFrame(info_dict)
             info_df.to_csv(f'daily_close_data/{company_code}.csv', encoding = 'utf_8_sig')
+            
+            # store data in sqlite to select data 
+            year = re.search(r'(\d\d\d\d)(\d\d\d\d)', self.start).group(1)
+            db = sqlite3.connect(f'{year}.db')
+            db_cursor = db.cursor()
+            # db_cursor.execute(f'CREATE TABLE Daily_data_2330(Date, Open, High, Low, Close, Adj Close, Volume)')
+            db.commit()
+            info_df.to_sql(company_code, db, if_exists='append', index=False)
+            
+            
             
         self.candi_company_dic = dict(zip(self.candi_company_code, self.candi_company))
         print(len(self.candi_company))
