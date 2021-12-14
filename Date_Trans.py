@@ -52,7 +52,7 @@ def time_for_yahoo(start_time, end_time):
     end_time_str = f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'
     end_time_str = datetime.datetime.strptime( str(end_time_str) , '%Y-%m-%d' )
     
-    period_1 = (start_time_str - initial_time_str).days * (24 * 60 * 60 )
-    period_2 = (end_time_str - initial_time_str).days * (24 * 60 * 60 )
+    period_1 = (start_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411
+    period_2 = (end_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411
     
     return period_1, period_2
