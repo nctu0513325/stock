@@ -4,7 +4,7 @@ import pandas as pd
 import re, os
 import time
 from collections import defaultdict
-from Date_Trans import date_trans
+from Date_Trans import date_trans, time_for_yahoo
 
 class Sel_Company():
     """Get daily stock data, and list all stock matched with requirements"""
@@ -36,7 +36,6 @@ class Sel_Company():
                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9", 
                     "Accept-Encoding": "gzip, deflate, br", 
                     "Accept-Language": "zh-TW,zh;q=0.9", 
-                    "Host": "www.twse.com.tw",  #目標網站
                     "Sec-Fetch-Dest": "document", 
                     "Sec-Fetch-Mode": "navigate", 
                     "Sec-Fetch-Site": "none", 
@@ -89,52 +88,19 @@ class Sel_Company():
         ave_close_price_60 = defaultdict(list)
         ave_close_price_120 = defaultdict(list)
         
+        period_1, period_2 = time_for_yahoo(self.start, self.end)
         try:
-            os.mkdir("monthly_data")
+            os.mkdir("daily_close_data")
         except:
             pass
-        self.date_list_month = ['20210101', '20210201', '20210301', '20210401']
-        for date in self.date_list_month:
-            print(f'Collecting {date} data from website')
-
-            for company_code in self.candi_company_dic.keys():
-                print(company_code)
-                # get each company's closing for all year
-                requests.adapters.DEFAULT_RETRIES = 5
-                time.sleep(5)
-                r = requests.get(f'https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=csv&date={date}&stockNo={company_code}', headers = my_headers)
-                info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
-                info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
-                info_df = pd.DataFrame(info_dict)
-                info_df.to_csv(f'monthly_data/{company_code}_{date}.csv', encoding = 'utf_8_sig')
-                
-                # store closing price in dictionary
-                try:
-                    clos_price_all[company_code].append(list(pd.to_numeric(info_df['收盤價'], errors = 'ignore')))
-                except KeyError:             
-                    print(info_df)
-                    
-        for company in clos_price_all.keys():
-            # calculate ave(60)
-            for n in range(0, len(clos_price_all[company])-1):
-                ave_close_price_60[company].append((numpy.mean(clos_price_all[company][n]) + numpy.mean(clos_price_all[company][n+1])) / 2)
-            # calculate ave(120)
-            for n in range(0, len(clos_price_all[company])-3):
-                ave_close_price_120[company].append((numpy.mean(clos_price_all[company][n]) + numpy.mean(clos_price_all[company][n+1]) 
-                                                     + numpy.mean(clos_price_all[company][n+2]) + numpy.mean(clos_price_all[company][n+3])) / 4)
-
-        for company in clos_price_all.keys():
-            for n in range(len(ave_close_price_60[company])):
-                if clos_price_all[company][n+1][-1] < ave_close_price_60[company][n]:
-                    pass
-                else:
-                    self.del_company(company)
-            for n in range(len(ave_close_price_120[company])):
-                if clos_price_all[company][n+3][-1] < ave_close_price_120[company][n]:
-                    pass
-                else:
-                    self.del_company(company)
         
+        for company_code in self.candi_company_dic.keys():
+            r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=my_headers)
+            info = [l.split(",") for l in r.text.split("\n")]
+            info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
+            info_df = pd.DataFrame(info_dict)
+            info_df.to_csv(f'daily_close_data/{company_code}.csv', encoding = 'utf_8_sig')
+            
         self.candi_company_dic = dict(zip(self.candi_company_code, self.candi_company))
         print(len(self.candi_company))
         print(self.candi_company)       
