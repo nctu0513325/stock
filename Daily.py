@@ -120,7 +120,9 @@ class Sel_Company():
             # store monthly data in list
             for month in range(1,13):
                 sqlite3.enable_callback_tracebacks(True) 
-                cursor.execute(f"SELECT Close FROM 'daily_{company_code}' WHERE Date REGEXP", [f'\d\d\d\d-{month}-\d\d'])
+                print(f'daily_{company_code}')
+                print(f'\d\d\d\d-{month}-\d\d')
+                cursor.execute(f"SELECT Close FROM 'daily_{company_code}' WHERE Date REGEXP", [f'\d\d\d\d-{str(month).zfill(2)}-\d\d'])
                 db.execute('select error()')
                 result = cursor.fetchall()
                 tmp = []
