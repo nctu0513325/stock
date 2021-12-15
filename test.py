@@ -1,7 +1,7 @@
 from Date_Trans import time_for_yahoo
 import requests
 import pandas as pd
-import os
+import os, re
 import sqlite3
 
 period_1, period_2 = time_for_yahoo(20200101, 20201231)
@@ -24,10 +24,28 @@ info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
 info_df = pd.DataFrame(info_dict)
 print(info_df)
 
+def regexp_db(expr, item):
+    reg = re.compile(expr)
+    return reg.search(item) is not None
+
 # trans to sqlite to select data
-db = sqlite3.connect("2330_for_2020.db")
-db_cursor = db.cursor()
-db_cursor.execute(f'CREATE TABLE Daily_data_2330(Date, Open, High, Low, Close, Adj Close, Volume)')
+db = sqlite3.connect("2020.db")
+cursor = db.cursor()
+# cursor.execute(f'CREATE TABLE 2330')
 db.commit()
-info_df.to_sql('2330_for_2020', db, if_exists='append', index=False)
+info_df.to_sql('2330', db, if_exists='append', index=False)
+db.create_function("REGEXP", 2, regexp_db)
+sqlite3.enable_callback_tracebacks(True)   # <-- !
+
+
+cursor.execute('SELECT Date FROM "2330" WHERE Date REGEXP ?', ['\d\d\d\d-01-\d\d'])
+# db.execute('select error()')
+result = cursor.fetchall()
+print(result)
+for item in result:
+    print(type(str(item)))
+    print(str(item[0]))
+db.close()
+
+
 # https://query1.finance.yahoo.com/v7/finance/download/" + stock_id + "?period1=" + str(s1) + "&amp;period2=" + str(s2) + "&amp;interval=1d&amp;events=history&amp;includeAdjustedClose=true"
