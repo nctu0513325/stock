@@ -28,7 +28,8 @@ class Sel_Company():
         
     def regexp_db(expr, item):
         reg = re.compile(expr)
-        return reg.search(item) is not None
+        print(reg.search(item))
+        return reg.search(item) 
 
     def Select(self):        
         """Get data from twse. select company"""
@@ -99,7 +100,7 @@ class Sel_Company():
         except:
             pass
         
-        for company_code in self.candi_company_dic.keys():
+        for company_code in self.candi_company_code:
             print(company_code)
             r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=my_headers)
             info = [l.split(",") for l in r.text.split("\n")]
@@ -112,19 +113,30 @@ class Sel_Company():
             year = tmp_time.group(1)
             db = sqlite3.connect(f'{year}.db')
             cursor = db.cursor()
-            info_df.to_sql(company_code, db, if_exists='append', index=False)
+            info_df.to_sql(f'daily_{company_code}', db, if_exists='append', index=False)
             db.commit()
             db.create_function("REGEXP", 2, self.regexp_db)
             
             # store monthly data in list
             for month in range(1,13):
-                cursor.execute(f'SELECT Close FROM {company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-{month}-\d\d'])
+                sqlite3.enable_callback_tracebacks(True) 
+                cursor.execute(f"SELECT Close FROM 'daily_{company_code}' WHERE Date REGEXP", [f'\d\d\d\d-{month}-\d\d'])
+                db.execute('select error()')
                 result = cursor.fetchall()
                 tmp = []
                 for i in result:
                     tmp.append(i[0])
                 clos_price_all[company_code].append(tmp)
             db.close()     # close connection with sqlite
+            
+            # calculate average 60 day data
+            for i in range(0,len(clos_price_all[company_code])-1):
+                ave_close_price_60[company_code].append((numpy.mean(clos_price_all[company_code][i]) + numpy.mean(clos_price_all[company_code][i+1])) / 2)    
+            # calculate average 120 day data
+            for n in range(0, len(clos_price_all[company_code])-3):
+                ave_close_price_120[company_code].append((numpy.mean(clos_price_all[company_code][n]) + numpy.mean(clos_price_all[company_code][n+1]) 
+                                                     + numpy.mean(clos_price_all[company_code][n+2]) + numpy.mean(clos_price_all[company_code][n+3])) / 4)
+            
             
         self.candi_company_dic = dict(zip(self.candi_company_code, self.candi_company))
         print(len(self.candi_company))
