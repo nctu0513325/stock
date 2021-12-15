@@ -37,8 +37,9 @@ info_df.to_sql('2330', db, if_exists='append', index=False)
 db.create_function("REGEXP", 2, regexp_db)
 sqlite3.enable_callback_tracebacks(True)   # <-- !
 
-
-cursor.execute('SELECT Date FROM "2330" WHERE Date REGEXP ?', ['\d\d\d\d-01-\d\d'])
+date = '01'
+code = '2330'
+cursor.execute(f'SELECT Close FROM "{code}" WHERE Date REGEXP ?', [f'\d\d\d\d-{date}-\d\d'])
 # db.execute('select error()')
 result = cursor.fetchall()
 print(result)
