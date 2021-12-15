@@ -25,6 +25,10 @@ class Sel_Company():
             self.candi_company.remove(self.candi_company_dic[company_code])
         except ValueError:
             pass
+        
+    def regexp_db(expr, item):
+        reg = re.compile(expr)
+        return reg.search(item) is not None
 
     def Select(self):        
         """Get data from twse. select company"""
@@ -82,7 +86,7 @@ class Sel_Company():
         self.candi_company_code = list(set(self.all_company_code[0]).intersection(*self.all_company_code[1:]))
         self.candi_company_dic = dict(zip(self.candi_company_code, self.candi_company))
         print(len(self.candi_company))
-        print(self.candi_company)
+        print(self.candi_company_dic)
     
         """Get closing price from twse and sel by closing price > ave(60) ave(120) """
         clos_price_all = defaultdict(list)
@@ -96,6 +100,7 @@ class Sel_Company():
             pass
         
         for company_code in self.candi_company_dic.keys():
+            print(company_code)
             r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=my_headers)
             info = [l.split(",") for l in r.text.split("\n")]
             info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
@@ -103,14 +108,23 @@ class Sel_Company():
             info_df.to_csv(f'daily_close_data/{company_code}.csv', encoding = 'utf_8_sig')
             
             # store data in sqlite to select data 
-            year = re.search(r'(\d\d\d\d)(\d\d\d\d)', self.start).group(1)
+            tmp_time = re.search(r'(\d\d\d\d)(\d\d\d\d)', str(self.start))
+            year = tmp_time.group(1)
             db = sqlite3.connect(f'{year}.db')
-            db_cursor = db.cursor()
-            # db_cursor.execute(f'CREATE TABLE Daily_data_2330(Date, Open, High, Low, Close, Adj Close, Volume)')
-            db.commit()
+            cursor = db.cursor()
             info_df.to_sql(company_code, db, if_exists='append', index=False)
+            db.commit()
+            db.create_function("REGEXP", 2, self.regexp_db)
             
-            
+            # store monthly data in list
+            for month in range(1,13):
+                cursor.execute(f'SELECT Close FROM {company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-{month}-\d\d'])
+                result = cursor.fetchall()
+                tmp = []
+                for i in result:
+                    tmp.append(i[0])
+                clos_price_all[company_code].append(tmp)
+            db.close()     # close connection with sqlite
             
         self.candi_company_dic = dict(zip(self.candi_company_code, self.candi_company))
         print(len(self.candi_company))
