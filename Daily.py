@@ -26,10 +26,9 @@ class Sel_Company():
         except ValueError:
             pass
         
-    def regexp_db(expr, item):
+    def regexp_db(self, expr, item):
         reg = re.compile(expr)
-        print(reg.search(item))
-        return reg.search(item) 
+        return reg.search(item) is not None
 
     def Select(self):        
         """Get data from twse. select company"""
@@ -93,8 +92,10 @@ class Sel_Company():
         clos_price_all = defaultdict(list)
         ave_close_price_60 = defaultdict(list)
         ave_close_price_120 = defaultdict(list)
-        
+        self.candi_company = []
+        company_code_tmp =[]        
         period_1, period_2 = time_for_yahoo(self.start, self.end)
+        
         try:
             os.mkdir("daily_close_data")
         except:
@@ -116,19 +117,14 @@ class Sel_Company():
             info_df.to_sql(f'daily_{company_code}', db, if_exists='append', index=False)
             db.commit()
             db.create_function("REGEXP", 2, self.regexp_db)
+            sqlite3.enable_callback_tracebacks(True)
             
             # store monthly data in list
             for month in range(1,13):
                 sqlite3.enable_callback_tracebacks(True) 
-                print(f'daily_{company_code}')
-                print(f'\d\d\d\d-{month}-\d\d')
-                cursor.execute(f"SELECT Close FROM 'daily_{company_code}' WHERE Date REGEXP", [f'\d\d\d\d-{str(month).zfill(2)}-\d\d'])
-                db.execute('select error()')
+                cursor.execute(f'SELECT Close FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(month).zfill(2)}-\d\d'])
                 result = cursor.fetchall()
-                tmp = []
-                for i in result:
-                    tmp.append(i[0])
-                clos_price_all[company_code].append(tmp)
+                clos_price_all[company_code].append([float(i[0]) for i in result])
             db.close()     # close connection with sqlite
             
             # calculate average 60 day data
@@ -139,12 +135,27 @@ class Sel_Company():
                 ave_close_price_120[company_code].append((numpy.mean(clos_price_all[company_code][n]) + numpy.mean(clos_price_all[company_code][n+1]) 
                                                      + numpy.mean(clos_price_all[company_code][n+2]) + numpy.mean(clos_price_all[company_code][n+3])) / 4)
             
+            # close > ave close
+            pass_flag = 1
+            # ave 60:
+            for i in range(len(ave_close_price_60)):
+                while pass_flag:
+                    if ave_close_price_60[company_code][i] > clos_price_all[company_code][i+1][-1]:
+                        pass_flag = 0
+            # ave 120:        
+            for i in range(len(ave_close_price_120)):
+                while pass_flag:
+                    if ave_close_price_120[company_code][i] > clos_price_all[company_code][i+3][-1]:
+                        pass_flag = 0
             
+            if pass_flag:
+                company_code_tmp.append(company_code)
+                self.candi_company.append(self.candi_company_dic[company_code])
+            
+        self.candi_company_code = company_code_tmp
         self.candi_company_dic = dict(zip(self.candi_company_code, self.candi_company))
         print(len(self.candi_company))
-        print(self.candi_company)       
-            
-        print(clos_price_all)                        
+        print(self.candi_company_dic)                               
                 
 if __name__ == '__main__':
     D = Sel_Company(20200102, 20201231, 7)
