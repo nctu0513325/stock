@@ -35,6 +35,7 @@ cursor = db.cursor()
 db.commit()
 info_df.to_sql('2330', db, if_exists='append', index=False)
 db.create_function("REGEXP", 2, regexp_db)
+print(info_df)
 sqlite3.enable_callback_tracebacks(True)   # <-- !
 
 date = '01'

@@ -55,7 +55,7 @@ class Sel_Company():
             try:                
                 # get data from website and transfer into dataframe
                 requests.adapters.DEFAULT_RETRIES = 5
-                time.sleep(3)  # set sleep time to avoid connection error
+                time.sleep(5)  # set sleep time to avoid connection error
                 requests.session().keep_alive = False
                 r = requests.get(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date={date}&selectType=ALL', headers = my_headers)
                 info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
@@ -89,17 +89,12 @@ class Sel_Company():
         print(self.candi_company_dic)
     
         """Get closing price from twse and sel by closing price > ave(60) ave(120) """
-        clos_price_all = defaultdict(list)
-        ave_close_price_60 = defaultdict(list)
+        clos_price_all = defaultdict(list)      # store only last day close price for every month
+        ave_close_price_60 = defaultdict(list)  
         ave_close_price_120 = defaultdict(list)
         self.candi_company = []
         company_code_tmp =[]        
         period_1, period_2 = time_for_yahoo(self.start, self.end)
-        
-        try:
-            os.mkdir("daily_close_data")
-        except:
-            pass
         
         for company_code in self.candi_company_code:
             print(company_code)
@@ -107,6 +102,7 @@ class Sel_Company():
             info = [l.split(",") for l in r.text.split("\n")]
             info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
             info_df = pd.DataFrame(info_dict)
+            info_df[info_df.columns.tolist()].astype(float, errors='ignore')
             info_df.to_csv(f'daily_close_data/{company_code}.csv', encoding = 'utf_8_sig')
             
             # store data in sqlite to select data 
@@ -124,7 +120,7 @@ class Sel_Company():
                 sqlite3.enable_callback_tracebacks(True) 
                 cursor.execute(f'SELECT Close FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(month).zfill(2)}-\d\d'])
                 result = cursor.fetchall()
-                clos_price_all[company_code].append([float(i[0]) for i in result])
+                clos_price_all[company_code].append(float(result[-1][0]))
             db.close()     # close connection with sqlite
             
             # calculate average 60 day data
@@ -139,14 +135,16 @@ class Sel_Company():
             pass_flag = 1
             # ave 60:
             for i in range(len(ave_close_price_60)):
-                while pass_flag:
-                    if ave_close_price_60[company_code][i] > clos_price_all[company_code][i+1][-1]:
-                        pass_flag = 0
+                if ave_close_price_60[company_code][i] > clos_price_all[company_code][i+1][-1]:
+                    pass_flag = 0
+                if pass_flag == 0:
+                    break
             # ave 120:        
             for i in range(len(ave_close_price_120)):
-                while pass_flag:
-                    if ave_close_price_120[company_code][i] > clos_price_all[company_code][i+3][-1]:
-                        pass_flag = 0
+                if ave_close_price_120[company_code][i] > clos_price_all[company_code][i+3][-1]:
+                    pass_flag = 0
+                if pass_flag == 0:
+                    break 
             
             if pass_flag:
                 company_code_tmp.append(company_code)
