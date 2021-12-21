@@ -97,13 +97,12 @@ class Sel_Company():
         period_1, period_2 = time_for_yahoo(self.start, self.end)
         
         for company_code in self.candi_company_code:
-            print(company_code)
             r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=my_headers)
             info = [l.split(",") for l in r.text.split("\n")]
             info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
             info_df = pd.DataFrame(info_dict)
             info_df[info_df.columns.tolist()].astype(float, errors='ignore')
-            info_df.to_csv(f'daily_close_data/{company_code}.csv', encoding = 'utf_8_sig')
+            # info_df.to_csv(f'daily_close_data/{company_code}.csv', encoding = 'utf_8_sig')
             
             # store data in sqlite to select data 
             tmp_time = re.search(r'(\d\d\d\d)(\d\d\d\d)', str(self.start))
@@ -117,31 +116,37 @@ class Sel_Company():
             
             # store monthly data in list
             for month in range(1,13):
-                sqlite3.enable_callback_tracebacks(True) 
+                # average 60 day data
+                if month > 11:
+                    pass
+                else:
+                    cursor.execute(f'SELECT avg(Close) FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-0[{str(month)},{str(month+1)}]-\d\d'])
+                    result = cursor.fetchall()
+                    ave_close_price_60[company_code].append(float(result[-1][0]))
+                # average 120 day data
+                if month > 9:
+                    pass
+                else:
+                    cursor.execute(f'SELECT avg(Close) FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-0[{str(month)},{str(month+1)},{str(month+2)},{str(month+3)}]-\d\d'])
+                    result = cursor.fetchall()
+                    ave_close_price_120[company_code].append(float(result[-1][0]))
+                # close price for the last day in every month
                 cursor.execute(f'SELECT Close FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(month).zfill(2)}-\d\d'])
                 result = cursor.fetchall()
                 clos_price_all[company_code].append(float(result[-1][0]))
             db.close()     # close connection with sqlite
             
-            # calculate average 60 day data
-            for i in range(0,len(clos_price_all[company_code])-1):
-                ave_close_price_60[company_code].append((numpy.mean(clos_price_all[company_code][i]) + numpy.mean(clos_price_all[company_code][i+1])) / 2)    
-            # calculate average 120 day data
-            for n in range(0, len(clos_price_all[company_code])-3):
-                ave_close_price_120[company_code].append((numpy.mean(clos_price_all[company_code][n]) + numpy.mean(clos_price_all[company_code][n+1]) 
-                                                     + numpy.mean(clos_price_all[company_code][n+2]) + numpy.mean(clos_price_all[company_code][n+3])) / 4)
-            
             # close > ave close
             pass_flag = 1
             # ave 60:
-            for i in range(len(ave_close_price_60)):
-                if ave_close_price_60[company_code][i] > clos_price_all[company_code][i+1][-1]:
+            for i in range(len(ave_close_price_60[company_code])):
+                if ave_close_price_60[company_code][i] > clos_price_all[company_code][i+1]:
                     pass_flag = 0
                 if pass_flag == 0:
                     break
             # ave 120:        
-            for i in range(len(ave_close_price_120)):
-                if ave_close_price_120[company_code][i] > clos_price_all[company_code][i+3][-1]:
+            for i in range(len(ave_close_price_120[company_code])):
+                if ave_close_price_120[company_code][i] > clos_price_all[company_code][i+3]:
                     pass_flag = 0
                 if pass_flag == 0:
                     break 
