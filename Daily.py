@@ -61,6 +61,7 @@ class Sel_Company():
                 info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
                 info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
                 info_df = pd.DataFrame(info_dict)
+                info_df[info_df.columns.tolist()].astype(float, errors='ignore')
                 title = info_df.columns.tolist()    #['證券代號', '證券名稱', '殖利率(%)', '股利年度', '本益比', '股價淨值比', '財報年/季']
 
                 # set stock choosing requirement
@@ -95,6 +96,12 @@ class Sel_Company():
         self.candi_company = []
         company_code_tmp =[]        
         period_1, period_2 = time_for_yahoo(self.start, self.end)
+        tmp_time = re.search(r'(\d\d\d\d)(\d\d\d\d)', str(self.start))
+        year = tmp_time.group(1)
+        try:
+            os.remove(f'{year}_each_company.db')
+        except:
+            pass
         
         for company_code in self.candi_company_code:
             r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=my_headers)
@@ -102,12 +109,9 @@ class Sel_Company():
             info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
             info_df = pd.DataFrame(info_dict)
             info_df[info_df.columns.tolist()].astype(float, errors='ignore')
-            # info_df.to_csv(f'daily_close_data/{company_code}.csv', encoding = 'utf_8_sig')
             
             # store data in sqlite to select data 
-            tmp_time = re.search(r'(\d\d\d\d)(\d\d\d\d)', str(self.start))
-            year = tmp_time.group(1)
-            db = sqlite3.connect(f'{year}.db')
+            db = sqlite3.connect(f'{year}_each_company.db')
             cursor = db.cursor()
             info_df.to_sql(f'daily_{company_code}', db, if_exists='append', index=False)
             db.commit()

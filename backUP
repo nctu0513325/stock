@@ -1,0 +1,46 @@
+# store data as csv
+for date in self.date_list_week:
+            # print(f'Collecting {date} data from website')
+            try:                
+                # get data from website and transfer into dataframe
+                requests.adapters.DEFAULT_RETRIES = 5
+                time.sleep(5)  # set sleep time to avoid connection error
+                requests.session().keep_alive = False
+                r = requests.get(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date={date}&selectType=ALL', headers = my_headers)
+                info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
+                info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
+                info_df = pd.DataFrame(info_dict)
+                title = info_df.columns.tolist()    #['證券代號', '證券名稱', '殖利率(%)', '股利年度', '本益比', '股價淨值比', '財報年/季']
+
+                # set stock choosing requirement
+                info_df = info_df[pd.to_numeric(info_df[title[4]],errors = 'ignore') < 15 ]     #本益比
+                info_df = info_df[pd.to_numeric(info_df[title[2]],errors = 'ignore') > 4 ]      #殖利率(%)
+                info_df = info_df[pd.to_numeric(info_df[title[5]],errors = 'ignore') < 2 ]      #股價淨值比
+                
+                tmp = []
+                for com_name in info_df['證券名稱']:
+                    tmp.append(com_name)
+                self.all_company.append(tmp)
+                
+                tmp = []
+                for com_code in info_df['證券代號']:
+                    tmp.append(com_code)
+                self.all_company_code.append(tmp)
+                
+                info_df.to_csv(f'daily_data/{date}.csv', encoding = 'utf_8_sig')
+            except IndexError:
+                print(f'{date} is holiday, no data.')
+
+# store data as sql
+# trans data to sqlite
+                db = sqlite3.connect(f'PE_Yeild_PB.db')
+                cursor = db.cursor()
+                info_df.to_sql(f'{date}', db, if_exists='append', index = False)
+                db.commit()
+                # select 
+                print(f'SELECT 證券代號, 證券名稱 FROM "{date}" WHERE "本益比" < 15 AND "殖利率(%)" > 4 AND "股價淨值比" < 2')
+                cursor.execute(f'SELECT 證券代號, 證券名稱 FROM "{date}" WHERE "本益比" < 15 AND "殖利率(%)" > 4 AND "股價淨值比" < 2')
+                result = cursor.fetchall()
+                for data in result:
+                    self.all_company_code.append(data[0])
+                    self.all_company.append(data[1])
