@@ -144,7 +144,7 @@ class Sel_Company():
             pass_flag = 1
             # ave 60:
             for i in range(len(ave_close_price_60[company_code])):
-                if abs(ave_close_price_60[company_code][i] - clos_price_all[company_code][i+1]) > (clos_price_all[company_code][i+1]*0.05):
+                if (clos_price_all[company_code][i+1] - ave_close_price_60[company_code][i]) > -(clos_price_all[company_code][i+1]*0.05):
                     print(f'ave_close_price_60 : {ave_close_price_60[company_code][i]}')
                     print(f'clos_price_all : {clos_price_all[company_code][i+1]}')
                     pass_flag = 0
@@ -152,7 +152,7 @@ class Sel_Company():
                     break
             # ave 120:        
             for i in range(len(ave_close_price_120[company_code])):
-                if abs(ave_close_price_120[company_code][i] - clos_price_all[company_code][i+3]) > (clos_price_all[company_code][i+3]*0.05):
+                if (clos_price_all[company_code][i+3] - ave_close_price_120[company_code][i]) > -(clos_price_all[company_code][i+3]*0.05):
                     pass_flag = 0
                 if pass_flag == 0:
                     break 
