@@ -55,9 +55,9 @@ class Sel_Company():
             try:                
                 # get data from website and transfer into dataframe
                 requests.adapters.DEFAULT_RETRIES = 5
-                time.sleep(5)  # set sleep time to avoid connection error
-                requests.session().keep_alive = False
+                time.sleep(3)  # set sleep time to avoid connection error
                 r = requests.get(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date={date}&selectType=ALL', headers = my_headers)
+                requests.session().keep_alive = False
                 info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
                 info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
                 info_df = pd.DataFrame(info_dict)
@@ -140,17 +140,19 @@ class Sel_Company():
                 clos_price_all[company_code].append(float(result[-1][0]))
             db.close()     # close connection with sqlite
             
-            # close > ave close
+            # close > ave close 5%
             pass_flag = 1
             # ave 60:
             for i in range(len(ave_close_price_60[company_code])):
-                if ave_close_price_60[company_code][i] > clos_price_all[company_code][i+1]:
+                if abs(ave_close_price_60[company_code][i] - clos_price_all[company_code][i+1]) > (clos_price_all[company_code][i+1]*0.05):
+                    print(f'ave_close_price_60 : {ave_close_price_60[company_code][i]}')
+                    print(f'clos_price_all : {clos_price_all[company_code][i+1]}')
                     pass_flag = 0
                 if pass_flag == 0:
                     break
             # ave 120:        
             for i in range(len(ave_close_price_120[company_code])):
-                if ave_close_price_120[company_code][i] > clos_price_all[company_code][i+3]:
+                if abs(ave_close_price_120[company_code][i] - clos_price_all[company_code][i+3]) > (clos_price_all[company_code][i+3]*0.05):
                     pass_flag = 0
                 if pass_flag == 0:
                     break 
