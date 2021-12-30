@@ -6,16 +6,12 @@ def date_trans(start, end, gap) -> list :
     big_month = [1, 3, 5, 7, 8, 10, 12]
     small_month = [4, 6, 9, 11]
     time_list_week = []
-    time_list_month = []
     
     while int(start) <= int(end):           
         date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(start))
         year = int(date_tmp.group(1))
         month = int(date_tmp.group(2))
         day = int(date_tmp.group(3))
-        
-        if f'{str(year).zfill(4)}{str(month).zfill(2)}01' not in time_list_month:
-            time_list_month.append(f'{str(year).zfill(4)}{str(month).zfill(2)}01')
         
         if (month in big_month) and (day > 31):
             month += 1
@@ -37,7 +33,7 @@ def date_trans(start, end, gap) -> list :
         day += gap
         start = f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}'
         
-    return time_list_week, time_list_month
+    return time_list_week
 
 def time_for_yahoo(start_time, end_time):
     """Yahoo website need time with special form"""
