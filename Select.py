@@ -12,7 +12,7 @@ def regexp_db( expr, item):
     reg = re.compile(expr)
     return reg.search(item) is not None
 
-def Select(start, end, gap):        
+def Select(start, end, gap) :        
     """Get data from twse. select company"""
     date_list_week = date_trans(start, end, gap)
     all_company = []           # each item is a list stored company 

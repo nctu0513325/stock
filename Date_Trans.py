@@ -1,8 +1,7 @@
 import re
 import datetime
 
-def date_trans(start, end, gap) -> list : 
-    """Trans time into list to avoid wrong date."""
+def date_trans(start, end, gap) : 
     big_month = [1, 3, 5, 7, 8, 10, 12]
     small_month = [4, 6, 9, 11]
     time_list_week = []
@@ -52,3 +51,7 @@ def time_for_yahoo(start_time, end_time):
     period_2 = (end_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411
     
     return period_1, period_2
+
+def trans_time_for_db(time):
+    date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(time))
+    return f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'
