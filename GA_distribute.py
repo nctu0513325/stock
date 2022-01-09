@@ -21,8 +21,8 @@ NUM_CROSSOVER_2 = NUM_CROSSOVER*2               # 上數的兩倍
 np.random.seed(0)
 
 candi_company_dic = {'2493': '宏普', '2616': '永裕', '6184': '新產', '2324': '嘉彰', '3528': '敦吉', '2347': '國票金', '1615': '伸興', '2904': '和碩'}
-start_date = '20201201'
-end_date = '20201231'
+start = '20200102'
+end = '20201231'
 money = 50000
 # ============== function ==================
 def  init_pop(NUM_BIT) :
@@ -31,26 +31,38 @@ def  init_pop(NUM_BIT) :
     tmp = [i/sum(i) for i in tmp]
     return tmp
 
-def get_close_from_db(company, date):
-    print('pass')
+def regexp_db( expr, item):
+    reg = re.compile(expr)
+    return reg.search(item) is not None
+
+def get_close_from_db(company, start_date, end_date):
+    '''close the the first and the last close price for the last month'''
+    db = sqlite3.connect(f'{start_date}_{end_date}.db')
+    cursor = db.cursor()
+    time_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(end_date))
+    last_month = time_tmp.group(2)
+    
+    db.create_function("REGEXP", 2, regexp_db)
+    cursor.execute(f'SELECT Close FROM daily_{company} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(last_month)}-\d\d'])
+    result = cursor.fetchall()
+    return result[0],result[-1]
     
 def fitFunc(num_list):
     '''fit function, calculate total money earn'''
     money_earn = 0
     for i in len(num_list):
-        close_start = get_close_from_db(company_code[i], trans_time_for_db(start_date))
-        close_end = get_close_from_db(company_code[i], trans_time_for_db(end_date))
-        num_of_stock = int(money*num_list[i]/close_start)
-        money_earn += num_of_stock*(close_end - close_start)
+        close_start, close_end = get_close_from_db(company_code[i], start_date, end_date)
+        num_of_stock = int(money*num_list[i]/close_start)       # num of stock can buy 
+        money_earn += num_of_stock*(close_end - close_start)    # money can earn 
     return money_earn
             
 def evaluatePop(pop):
     '''get list of fitness of each pop'''
     return [fitFunc(i) for i in pop]
         
-
-def GA_main(candi_company_dic, start_date, end_date):
-    global company_code 
+def GA_main(candi_company_dic, start, end):
+    global company_code, start_date, end_date
+    start_date, end_date = start, end
     company_code = [i for i in candi_company_dic.keys()]
     NUM_BIT = len(company_code)
     
@@ -58,4 +70,4 @@ def GA_main(candi_company_dic, start_date, end_date):
     pop_fit = evaluatePop(pop)      #calculate fitness
 
 if __name__ == '__main__':
-    GA_main(candi_company_dic)
+    GA_main(candi_company_dic, start, end)

@@ -84,7 +84,7 @@ def Select(start, end, gap) :
     tmp_time = re.search(r'(\d\d\d\d)(\d\d\d\d)', str(start))
     year = tmp_time.group(1)
     try:
-        os.remove(f'{year}_each_company.db')
+        os.remove(f'{start}_{end}.db')
     except:
         pass
     
@@ -96,7 +96,7 @@ def Select(start, end, gap) :
         info_df[info_df.columns.tolist()].astype(float, errors='ignore')
         
         # store data in sqlite to select data 
-        db = sqlite3.connect(f'{year}_each_company.db')
+        db = sqlite3.connect(f'{start}_{end}.db')
         cursor = db.cursor()
         info_df.to_sql(f'daily_{company_code}', db, if_exists='append', index=False)
         db.commit()
