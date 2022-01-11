@@ -11,6 +11,7 @@ Pc = 0.5    				# 交配率 (代表共執行Pc*NUM_CHROME/2次交配)
 Pm = 0.5   					# 突變率 (代表共要執行Pm*NUM_CHROME*Num_of_Job次突變)
 pressure = 0.1              # N-tourment 參數
 best_iteration = []                         #紀錄多快達到已知最佳解
+iteration = 100
 first = 0
 
 NUM_PARENT = NUM_CHROME                         # 父母的個數
@@ -45,12 +46,13 @@ def get_close_from_db(company, start_date, end_date):
     db.create_function("REGEXP", 2, regexp_db)
     cursor.execute(f'SELECT Close FROM daily_{company} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(last_month)}-\d\d'])
     result = cursor.fetchall()
-    return result[0],result[-1]
+    db.close()
+    return float(result[0][0]), float(result[-1][0])
     
 def fitFunc(num_list):
     '''fit function, calculate total money earn'''
     money_earn = 0
-    for i in len(num_list):
+    for i in range(len(num_list)):
         close_start, close_end = get_close_from_db(company_code[i], start_date, end_date)
         num_of_stock = int(money*num_list[i]/close_start)       # num of stock can buy 
         money_earn += num_of_stock*(close_end - close_start)    # money can earn 
@@ -59,7 +61,32 @@ def fitFunc(num_list):
 def evaluatePop(pop):
     '''get list of fitness of each pop'''
     return [fitFunc(i) for i in pop]
+
+def selection(pop, pop_fit):
+    '''Use N-tourment to select parent group'''
+    a, b = [], []
+    
+    for i in range(NUM_PARENT):
+        fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
+        best = np.max([pop_fit[i] for i in fit_select])
+        a.append(pop[pop_fit.index(best)])
+        b.append(pop_fit[pop_fit.index(best)])
         
+    return a, b
+
+def crossover(parent, parent_fit):
+    ''' Use N-tourment to select parent again,
+        and do one point crossover'''
+    
+    fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
+    best = np.max([parent_fit[i] for i in fit_select])
+    parent_1 = parent[parent_fit.index(best)]
+
+    fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
+    best = np.max([parent_fit[i] for i in fit_select])
+    parent_2 = parent[parent_fit.index(best)]
+    
+    
 def GA_main(candi_company_dic, start, end):
     global company_code, start_date, end_date
     start_date, end_date = start, end
@@ -68,6 +95,13 @@ def GA_main(candi_company_dic, start, end):
     
     pop = init_pop(NUM_BIT)         # initialize population
     pop_fit = evaluatePop(pop)      #calculate fitness
+    
+    # =============pass===========
+    print(iteration)
+    for i in range(iteration):
+        print(f'Iteration : {i}')
+        parent, parent_fit = selection(pop, pop_fit)
+        offspring = crossover(parent, parent_fit)
 
 if __name__ == '__main__':
     GA_main(candi_company_dic, start, end)
