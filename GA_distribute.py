@@ -3,10 +3,9 @@ import numpy as np
 import csv
 import time
 import sqlite3
-from Daily import Sel_Company
-from Date_Trans import trans_time_for_db
+
 # ============== parameter setting ===============
-NUM_CHROME = 100            
+NUM_CHROME = 10           
 Pc = 0.5    				# 交配率 (代表共執行Pc*NUM_CHROME/2次交配)
 Pm = 0.5   					# 突變率 (代表共要執行Pm*NUM_CHROME*Num_of_Job次突變)
 pressure = 0.1              # N-tourment 參數
@@ -28,9 +27,7 @@ money = 50000
 # ============== function ==================
 def  init_pop(NUM_BIT) :
     '''Initialize population'''
-    tmp = np.random.randint(10,size = (NUM_CHROME, NUM_BIT))
-    tmp = [i/sum(i) for i in tmp]
-    return tmp
+    return np.random.randint(10,size = (NUM_CHROME, NUM_BIT))
 
 def regexp_db( expr, item):
     reg = re.compile(expr)
@@ -53,8 +50,10 @@ def fitFunc(num_list):
     '''fit function, calculate total money earn'''
     money_earn = 0
     for i in range(len(num_list)):
+        print(f'num_list : {num_list}')
         close_start, close_end = get_close_from_db(company_code[i], start_date, end_date)
-        num_of_stock = int(money*num_list[i]/close_start)       # num of stock can buy 
+        split_money = i/sum(num_list)*money
+        num_of_stock = int(split_money/close_start)       # num of stock can buy 
         money_earn += num_of_stock*(close_end - close_start)    # money can earn 
     return money_earn
             
@@ -77,31 +76,67 @@ def selection(pop, pop_fit):
 def crossover(parent, parent_fit):
     ''' Use N-tourment to select parent again,
         and do one point crossover'''
+        
+    child = []
     
-    fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
-    best = np.max([parent_fit[i] for i in fit_select])
-    parent_1 = parent[parent_fit.index(best)]
+    for _ in range(NUM_CROSSOVER):
+        fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
+        best = np.max([parent_fit[i] for i in fit_select])
+        parent_1 = parent[parent_fit.index(best)]
+        
+        fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
+        best = np.max([parent_fit[i] for i in fit_select])
+        parent_2 = parent[parent_fit.index(best)]
+        
+        cut_point = np.random.randint(1, NUM_BIT)
+        
+        child.append(list(np.concatenate((parent_1[0:cut_point], parent_2[cut_point:NUM_BIT]), axis = 0 )))
+        child.append(list(np.concatenate((parent_2[0:cut_point], parent_1[cut_point:NUM_BIT]), axis = 0 )))
+    
+    return child
+    
+def mutation(offspring):
+    for _ in range(NUM_MUTATION):
+        pass
 
-    fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
-    best = np.max([parent_fit[i] for i in fit_select])
-    parent_2 = parent[parent_fit.index(best)]
+def sortChrome(pop, pop_fit):
+    '''sort the chrome according to fit decending'''
+    pop_index = range(len(pop))
+    pop_fit, pop_index = zip(*sorted(zip(pop_fit, pop_index), reverse=True))
     
+    return [pop[i] for i in pop_index], pop_fit
+
+def replace(pop, pop_fit, offspring, offspring_fit):
+    '''replace old pop with new offspring with better fit'''
+    tmp = np.concatenate((pop, offspring), axis = 0)
+    tmp_fit = pop_fit + offspring_fit
     
+    tmp, tmp_fit = sortChrome(tmp, tmp_fit)
+    
+    return tmp[:NUM_CHROME], list(tmp_fit[:NUM_CHROME])   
+ 
 def GA_main(candi_company_dic, start, end):
-    global company_code, start_date, end_date
+    global company_code, start_date, end_date, NUM_BIT, NUM_MUTATION
     start_date, end_date = start, end
     company_code = [i for i in candi_company_dic.keys()]
-    NUM_BIT = len(company_code)
+    NUM_BIT = len(company_code)    
+    NUM_MUTATION = int(Pm * NUM_CHROME * NUM_BIT)
     
     pop = init_pop(NUM_BIT)         # initialize population
+    print(pop)
     pop_fit = evaluatePop(pop)      #calculate fitness
     
-    # =============pass===========
-    print(iteration)
     for i in range(iteration):
         print(f'Iteration : {i}')
         parent, parent_fit = selection(pop, pop_fit)
         offspring = crossover(parent, parent_fit)
+        mutation(offspring)
+        # print(f'offspring:{offspring}')
+        # print(f'offspring_len:{len(offspring)}')
+        offspring_fit = evaluatePop(offspring)
+        pop, pop_fit = replace(pop, pop_fit, offspring, offspring_fit)
+        print(f'Best solution : {pop_fit[0]}')
+        # =============pass===========
 
 if __name__ == '__main__':
     GA_main(candi_company_dic, start, end)
