@@ -49,20 +49,24 @@ def get_close_from_db(company, month):
     
 def fitFunc(num_list):
     '''fit function, calculate total money earn'''
-    money_earn = 0
-    ave_SD = 0
+    fit = 0
     
     for i in range(len(num_list)):
-        # calculate total money_earn
-        close_start, close_end = last_month_closing[company_code[i]][0], last_month_closing[company_code[i]][1]
-        split_money = Decimal(f'{num_list[i]/sum(num_list)*money}').quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP)
-        num_of_stock = round(split_money/close_start, 0)       # num of stock can buy 
-        money_earn += num_of_stock*(close_end - close_start)    # money can earn
-        
-        # calculate average SD
         part = Decimal(f'{num_list[i]/sum(num_list)}').quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP)
-        ave_SD += part * Decimal(f"{annual_SD_company[company_code[i]][0]}")
-    return float(money_earn/ave_SD)
+        if part == 0:
+            pass
+        else:            
+            # calculate total money_earn
+            close_start, close_end = last_month_closing[company_code[i]][0], last_month_closing[company_code[i]][1]
+            split_money = Decimal(f'{part*money}').quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP)
+            num_of_stock = round(split_money/close_start, 0)       # num of stock can buy 
+            money_earn = num_of_stock*(close_end - close_start)    # money can earn
+            
+            # calculate average SD
+            ave_SD = part * Decimal(f"{annual_SD_company[company_code[i]][0]}")
+        
+            fit += money_earn/ave_SD
+    return float(money_earn/(ave_SD**2))
             
 def evaluatePop(pop):
     '''get list of fitness of each pop'''
@@ -179,7 +183,6 @@ def GA_main(candi_company_code, start, end):
     db.close()
     stop_time = time.process_time()
     print(f'time : {stop_time-start_time}')
-    # =============pass===========
 
 if __name__ == '__main__':
     GA_main(candi_company_code, start, end)
