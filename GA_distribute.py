@@ -1,26 +1,29 @@
-import os, re
+from cmath import sqrt
+import re
+from unicodedata import decimal
 import numpy as np
-import csv
 import time
 import sqlite3
+from decimal import Decimal
+import decimal
+from collections import defaultdict
 
 # ============== parameter setting ===============
-NUM_CHROME = 10           
+NUM_CHROME = 100           
 Pc = 0.5    				# 交配率 (代表共執行Pc*NUM_CHROME/2次交配)
 Pm = 0.5   					# 突變率 (代表共要執行Pm*NUM_CHROME*Num_of_Job次突變)
 pressure = 0.1              # N-tourment 參數
 best_iteration = []                         #紀錄多快達到已知最佳解
-iteration = 100
+iteration = 3000
 first = 0
 
 NUM_PARENT = NUM_CHROME                         # 父母的個數
 Num_pressure = int(pressure * NUM_CHROME)       
 NUM_CROSSOVER = int(Pc * NUM_CHROME / 2)        # 交配的次數
 NUM_CROSSOVER_2 = NUM_CROSSOVER*2               # 上數的兩倍
-# NUM_MUTATION = int(Pm * NUM_CHROME * Num_of_Job)   # 突變的次數
 np.random.seed(0)
 
-candi_company_dic = {'2493': '宏普', '2616': '永裕', '6184': '新產', '2324': '嘉彰', '3528': '敦吉', '2347': '國票金', '1615': '伸興', '2904': '和碩'}
+candi_company_code = ['2493', '2616', '6184', '2324', '3528', '2347', '1615', '2904']
 start = '20200102'
 end = '20201231'
 money = 50000
@@ -33,29 +36,33 @@ def regexp_db( expr, item):
     reg = re.compile(expr)
     return reg.search(item) is not None
 
-def get_close_from_db(company, start_date, end_date):
+def get_close_from_db(company, month):
     '''close the the first and the last close price for the last month'''
-    db = sqlite3.connect(f'{start_date}_{end_date}.db')
     cursor = db.cursor()
-    time_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(end_date))
-    last_month = time_tmp.group(2)
     
     db.create_function("REGEXP", 2, regexp_db)
-    cursor.execute(f'SELECT Close FROM daily_{company} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(last_month)}-\d\d'])
+    cursor.execute(f'SELECT Close FROM daily_{company} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(month).zfill(2)}-\d\d'])
     result = cursor.fetchall()
-    db.close()
-    return float(result[0][0]), float(result[-1][0])
+
+    return Decimal(result[0][0]).quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP), \
+            Decimal(result[-1][0]).quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP)
     
 def fitFunc(num_list):
     '''fit function, calculate total money earn'''
     money_earn = 0
+    ave_SD = 0
+    
     for i in range(len(num_list)):
-        print(f'num_list : {num_list}')
-        close_start, close_end = get_close_from_db(company_code[i], start_date, end_date)
-        split_money = i/sum(num_list)*money
-        num_of_stock = int(split_money/close_start)       # num of stock can buy 
-        money_earn += num_of_stock*(close_end - close_start)    # money can earn 
-    return money_earn
+        # calculate total money_earn
+        close_start, close_end = last_month_closing[company_code[i]][0], last_month_closing[company_code[i]][1]
+        split_money = Decimal(f'{num_list[i]/sum(num_list)*money}').quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP)
+        num_of_stock = round(split_money/close_start, 0)       # num of stock can buy 
+        money_earn += num_of_stock*(close_end - close_start)    # money can earn
+        
+        # calculate average SD
+        part = Decimal(f'{num_list[i]/sum(num_list)}').quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP)
+        ave_SD += part * Decimal(f"{annual_SD_company[company_code[i]][0]}")
+    return float(money_earn/ave_SD)
             
 def evaluatePop(pop):
     '''get list of fitness of each pop'''
@@ -97,8 +104,12 @@ def crossover(parent, parent_fit):
     
 def mutation(offspring):
     for _ in range(NUM_MUTATION):
-        pass
-
+        num_point = []
+        off_sel = np.random.randint(len(offspring), size = 1)[0]   # random select offspring
+        num_point = np.random.choice(NUM_BIT, np.random.randint(low = 1, high = NUM_BIT/2, size = 1)[0])        # decide the num of point to change
+        for n in num_point:
+            offspring[off_sel][n] = np.random.randint(10, size = 1)[0]
+        
 def sortChrome(pop, pop_fit):
     '''sort the chrome according to fit decending'''
     pop_index = range(len(pop))
@@ -113,17 +124,47 @@ def replace(pop, pop_fit, offspring, offspring_fit):
     
     tmp, tmp_fit = sortChrome(tmp, tmp_fit)
     
-    return tmp[:NUM_CHROME], list(tmp_fit[:NUM_CHROME])   
+    return tmp[:NUM_CHROME], list(tmp_fit[:NUM_CHROME])
+
+def Annual_SD_cal(com_code):
+    '''Calculate annual_SD of each stock
+    https://reurl.cc/KppLr9'''
+    annual_SD = defaultdict(list)
+    monthly_SD = defaultdict(list)
+    for code in com_code:
+        for month in range(1,13):
+            month_start, month_end = get_close_from_db(code, month)            
+            monthly_SD[code].append((month_end - month_start) / month_start)
+        company_SD = np.std(np.array(monthly_SD[code]), ddof = 1)
+        print(f'company_code:{company_SD}')
+        annual_SD[code].append(sqrt((company_SD**2)*12).real)
+    return annual_SD
+
+def get_last_month_close(com_code):
+    '''store last month closing price for each company'''
+    last_closing = defaultdict(list)
+    for code in com_code:
+        last_month_1, last_month_2 = get_close_from_db(code, last_month)
+        last_closing[code].append(last_month_1)
+        last_closing[code].append(last_month_2)
+    
+    return last_closing
  
-def GA_main(candi_company_dic, start, end):
-    global company_code, start_date, end_date, NUM_BIT, NUM_MUTATION
-    start_date, end_date = start, end
-    company_code = [i for i in candi_company_dic.keys()]
-    NUM_BIT = len(company_code)    
+def GA_main(candi_company_code, start, end):
+    # Initialize parameter
+    start_time = time.process_time()
+    global company_code, start_date, end_date, NUM_BIT, NUM_MUTATION, db, last_month, last_month_closing, annual_SD_company
+    start_date, end_date, company_code = start, end, candi_company_code 
+    NUM_BIT = len(company_code)
     NUM_MUTATION = int(Pm * NUM_CHROME * NUM_BIT)
+    db = sqlite3.connect(f'{start_date}_{end_date}.db')
+    time_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(end_date))
+    last_month = time_tmp.group(2)
+    annual_SD_company = Annual_SD_cal(candi_company_code)
+    print(annual_SD_company)
+    last_month_closing = get_last_month_close(candi_company_code)
     
     pop = init_pop(NUM_BIT)         # initialize population
-    print(pop)
     pop_fit = evaluatePop(pop)      #calculate fitness
     
     for i in range(iteration):
@@ -131,12 +172,14 @@ def GA_main(candi_company_dic, start, end):
         parent, parent_fit = selection(pop, pop_fit)
         offspring = crossover(parent, parent_fit)
         mutation(offspring)
-        # print(f'offspring:{offspring}')
-        # print(f'offspring_len:{len(offspring)}')
         offspring_fit = evaluatePop(offspring)
         pop, pop_fit = replace(pop, pop_fit, offspring, offspring_fit)
-        print(f'Best solution : {pop_fit[0]}')
-        # =============pass===========
+        
+    print(f'pop:{pop[0]} pop_fit:{pop_fit[0]}')
+    db.close()
+    stop_time = time.process_time()
+    print(f'time : {stop_time-start_time}')
+    # =============pass===========
 
 if __name__ == '__main__':
-    GA_main(candi_company_dic, start, end)
+    GA_main(candi_company_code, start, end)

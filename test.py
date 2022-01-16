@@ -1,15 +1,24 @@
+import imp
 from Date_Trans import time_for_yahoo
 import requests
 import pandas as pd
 import os, re
 import sqlite3
 import numpy as np
+from GA_distribute import Annual_SD_cal
 
-a = np.random.choice(100, 10)
-b = [1,3,5]
-print(a)
-print(np.max(b))
+com_code = ['2493', '2616', '6184', '2324', '3528', '2347', '1615', '2904']
+Annual_SD_cal(com_code)
 
+# a = np.random.choice(100, 10)
+# b = np.random.randint(10, size = 1)
+# for _ in range(100):
+#     num_point = np.random.choice(8, np.random.randint(8/2, size = 1)[0])
+#     if  len(num_point) == 0:
+#         print('not ')
+#     print(num_point)
+for i in range(1,12):
+    print(i)
 # period_1, period_2 = time_for_yahoo(20200101, 20201231)
 # print(period_1,period_2)
 # my_headers = {

@@ -55,11 +55,6 @@ def Select(start, end, gap) :
             info_df = info_df[pd.to_numeric(info_df[title[5]],errors = 'ignore') < 2 ]      #股價淨值比
             
             tmp = []
-            for com_name in info_df['證券名稱']:
-                tmp.append(com_name)
-            all_company.append(tmp)
-            
-            tmp = []
             for com_code in info_df['證券代號']:
                 tmp.append(com_code)
             all_company_code.append(tmp)
@@ -68,11 +63,8 @@ def Select(start, end, gap) :
         except IndexError:
             print(f'{date} is holiday, no data.')
             
-    candi_company = list(set(all_company[0]).intersection(*all_company[1:]))
     candi_company_code = list(set(all_company_code[0]).intersection(*all_company_code[1:]))
-    candi_company_dic = dict(zip(candi_company_code, candi_company))
-    print(len(candi_company))
-    print(candi_company_dic)
+    print(candi_company_code)
 
     """Get closing price from twse and sel by closing price > ave(60) ave(120) """
     clos_price_all = defaultdict(list)      # store only last day close price for every month
@@ -81,8 +73,7 @@ def Select(start, end, gap) :
     candi_company = []
     company_code_tmp =[]
     period_1, period_2 = time_for_yahoo(start, end)
-    tmp_time = re.search(r'(\d\d\d\d)(\d\d\d\d)', str(start))
-    year = tmp_time.group(1)
+    
     try:
         os.remove(f'{start}_{end}.db')
     except:
@@ -142,13 +133,10 @@ def Select(start, end, gap) :
         
         if pass_flag:
             company_code_tmp.append(company_code)
-            candi_company.append(candi_company_dic[company_code])
         
     candi_company_code = company_code_tmp
-    candi_company_dic = dict(zip(candi_company_code, candi_company))
-    print(len(candi_company))
-    print(candi_company_dic)
-    return candi_company_dic
+    print(candi_company_code)
+    return candi_company_code
         
 if __name__ == '__main__':
     candi_company_dic = Select(20200102, 20201231, 7)
