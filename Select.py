@@ -16,10 +16,10 @@ def Select(start, end, gap) :
     """Get data from twse. select company"""
     date_list_week = date_trans(start, end, gap)
     all_company_code = []      # each item is a list stored company code
-    try:
+    
+    if not os.path.exists("daily_data"):
         os.mkdir("daily_data")
-    except:
-        pass
+       
     my_headers = {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9", 
                 "Accept-Encoding": "gzip, deflate, br", 
@@ -71,10 +71,8 @@ def Select(start, end, gap) :
     company_code_tmp =[]
     period_1, period_2 = time_for_yahoo(start, end)
     
-    try:
+    if os.path.exists(f'{start}_{end}.db'):
         os.remove(f'{start}_{end}.db')
-    except:
-        pass
     
     for company_code in candi_company_code:
         r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=my_headers)
