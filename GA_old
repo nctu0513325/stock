@@ -9,7 +9,7 @@ import decimal
 from collections import defaultdict
 
 # ============== parameter setting ===============
-NUM_CHROME = 100        
+NUM_CHROME = 100           
 Pc = 0.5    				# 交配率 (代表共執行Pc*NUM_CHROME/2次交配)
 Pm = 0.5   					# 突變率 (代表共要執行Pm*NUM_CHROME*Num_of_Job次突變)
 pressure = 0.1              # N-tourment 參數
@@ -20,9 +20,7 @@ NUM_PARENT = NUM_CHROME                         # 父母的個數
 Num_pressure = int(pressure * NUM_CHROME)       
 NUM_CROSSOVER = int(Pc * NUM_CHROME / 2)        # 交配的次數
 NUM_CROSSOVER_2 = NUM_CROSSOVER*2               # 上數的兩倍
-# np.random.seed(0)
-
-stock_num = 4
+np.random.seed(0)
 
 # 2020
 candi_company_code = ['2493', '2616', '6184', '2324', '3528', '2347', '1615', '2904']
@@ -32,18 +30,9 @@ start = '20200102'
 end = '20201231'
 money = 50000
 # ============== function ==================
-def  init_pop() :
+def  init_pop(NUM_BIT) :
     '''Initialize population'''
-    pop =[]
-    tmp = np.zeros(NUM_BIT, int)
-    pnt = np.random.choice(NUM_BIT, 4)
-    for _ in range(NUM_CHROME):
-        for i in pnt:
-            tmp[i] = np.random.randint(low = 1, high = 10, size = 1)[0]
-        pop.append(tmp)
-
-    return pop
-    # return np.random.randint(10,size = (NUM_CHROME, NUM_BIT))
+    return np.random.randint(10,size = (NUM_CHROME, NUM_BIT))
 
 def regexp_db( expr, item):
     reg = re.compile(expr)
@@ -100,7 +89,7 @@ def selection(pop, pop_fit):
 
 def crossover(parent, parent_fit):
     ''' Use N-tourment to select parent again,
-        exchange first and third non-zero number'''
+        and do one point crossover'''
         
     child = []
     
@@ -109,31 +98,26 @@ def crossover(parent, parent_fit):
         fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
         best = np.max([parent_fit[i] for i in fit_select])
         parent_1 = parent[parent_fit.index(best)]
-        non_zero_1 = np.where(parent_1 != 0)        # find the index of non_zero number
         
         fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
         best = np.max([parent_fit[i] for i in fit_select])
         parent_2 = parent[parent_fit.index(best)]
-        non_zero_2 = np.where(parent_2 != 0)        # find the index of non_zero number
         
-        # exchange first and third non_zero number
-        for i in range(len(non_zero_1)):
-            parent_1[non_zero_1[i]], parent_2[non_zero_2[i]] = parent_2[non_zero_2[i]], parent_1[non_zero_1[i]]
-            
-        child.append(parent_2)
-        child.append(parent_1)
+        cut_point = np.random.randint(1, NUM_BIT)       # randomly decide crossover point
+        # one point crossover
+        child.append(list(np.concatenate((parent_1[0:cut_point], parent_2[cut_point:NUM_BIT]), axis = 0 )))
+        child.append(list(np.concatenate((parent_2[0:cut_point], parent_1[cut_point:NUM_BIT]), axis = 0 )))
     
     return child
     
 def mutation(offspring):
     for _ in range(NUM_MUTATION):
+        num_point = []
         off_sel = np.random.randint(len(offspring), size = 1)[0]   # random select offspring
-        change_zero_index = np.random.choice(np.where(offspring[off_sel] == 0)[0], int(stock_num/2))        # find zero index
-        change_non_zero_index = np.random.choice(np.where(offspring[off_sel] != 0)[0], int(stock_num/2))    # find non-zero index
-        for i in range(len(change_non_zero_index)):
-            offspring[off_sel][change_non_zero_index[i]], offspring[off_sel][change_zero_index[i]] = \
-            offspring[off_sel][change_zero_index[i]], offspring[off_sel][change_non_zero_index[i]]
-
+        num_point = np.random.choice(NUM_BIT, np.random.randint(low = 1, high = NUM_BIT/2, size = 1)[0])        # decide the num of point to change
+        for n in num_point:
+            offspring[off_sel][n] = np.random.randint(10, size = 1)[0]
+        
 def sortChrome(pop, pop_fit):
     '''sort the chrome according to fit decending'''
     pop_index = range(len(pop))
@@ -186,11 +170,11 @@ def GA_main(candi_company_code, start, end):
     annual_SD_company = Annual_SD_cal(candi_company_code)           # store ASD in list for faster data reading
     last_month_closing = get_last_month_close(candi_company_code)   # store last month closing price for each company for faster data reading
     
-    pop = init_pop()         # initialize population
+    pop = init_pop(NUM_BIT)         # initialize population
     pop_fit = evaluatePop(pop)      #calculate fitness
     
     for i in range(iteration):
-        print(f'Iteration : {i}')
+        # print(f'Iteration : {i}')
         parent, parent_fit = selection(pop, pop_fit)
         offspring = crossover(parent, parent_fit)
         mutation(offspring)

@@ -104,7 +104,8 @@ def Select(start, end, gap) :
             if month > 9:
                 pass
             else:
-                cursor.execute(f'SELECT avg(Close) FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-0[{str(month)},{str(month+1)},{str(month+2)},{str(month+3)}]-\d\d'])
+                cursor.execute(f'SELECT avg(Close) FROM daily_{company_code} WHERE Date REGEXP ?', \
+                                [f'\d\d\d\d-0[{str(month)},{str(month+1)},{str(month+2)},{str(month+3)}]-\d\d'])
                 result = cursor.fetchall()
                 ave_close_price_120[company_code].append(float(result[-1][0]))
             # close price for the last day in every month
