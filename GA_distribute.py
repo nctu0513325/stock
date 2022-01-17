@@ -12,7 +12,6 @@ NUM_CHROME = 100
 Pc = 0.5    				# 交配率 (代表共執行Pc*NUM_CHROME/2次交配)
 Pm = 0.5   					# 突變率 (代表共要執行Pm*NUM_CHROME*Num_of_Job次突變)
 pressure = 0.1              # N-tourment 參數
-best_iteration = []                         #紀錄多快達到已知最佳解
 iteration = 3000
 
 NUM_PARENT = NUM_CHROME                         # 父母的個數
@@ -22,7 +21,6 @@ NUM_CROSSOVER_2 = NUM_CROSSOVER*2               # 上數的兩倍
 # np.random.seed(0)
 
 stock_num = 4
-
 # 2020
 candi_company_code = ['2493', '2616', '6184', '2324', '3528', '2347', '1615', '2904']
 # 2021
