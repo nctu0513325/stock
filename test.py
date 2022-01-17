@@ -6,9 +6,13 @@ import os, re
 import sqlite3
 import numpy as np
 from GA_distribute import Annual_SD_cal
+from datetime import datetime
 
-com_code = ['2493', '2616', '6184', '2324', '3528', '2347', '1615', '2904']
-Annual_SD_cal(com_code)
+print(datetime.today().weekday())
+https://www.delftstack.com/zh-tw/howto/python/python-datetime-day-of-week/#:~:text=%E5%B9%BE%E7%9A%84%E5%90%8D%E7%A8%B1%E3%80%82-,%E4%BD%BF%E7%94%A8%20weekday()%20%E6%96%B9%E6%B3%95%E5%9C%A8Python%20%E4%B8%AD%E7%8D%B2%E5%8F%96%E6%97%A5%E6%9C%9F%E6%98%AF,%E7%82%BA0%EF%BC%8C%E9%80%B1%E6%97%A5%E7%82%BA6%E3%80%82
+
+# com_code = ['2493', '2616', '6184', '2324', '3528', '2347', '1615', '2904']
+# Annual_SD_cal(com_code)
 
 # a = np.random.choice(100, 10)
 # b = np.random.randint(10, size = 1)
@@ -17,8 +21,8 @@ Annual_SD_cal(com_code)
 #     if  len(num_point) == 0:
 #         print('not ')
 #     print(num_point)
-for i in range(1,12):
-    print(i)
+# for i in range(1,12):
+#     print(i)
 # period_1, period_2 = time_for_yahoo(20200101, 20201231)
 # print(period_1,period_2)
 # my_headers = {
