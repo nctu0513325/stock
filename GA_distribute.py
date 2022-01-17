@@ -15,7 +15,6 @@ Pm = 0.5   					# 突變率 (代表共要執行Pm*NUM_CHROME*Num_of_Job次突變
 pressure = 0.1              # N-tourment 參數
 best_iteration = []                         #紀錄多快達到已知最佳解
 iteration = 3000
-first = 0
 
 NUM_PARENT = NUM_CHROME                         # 父母的個數
 Num_pressure = int(pressure * NUM_CHROME)       
@@ -23,7 +22,10 @@ NUM_CROSSOVER = int(Pc * NUM_CHROME / 2)        # 交配的次數
 NUM_CROSSOVER_2 = NUM_CROSSOVER*2               # 上數的兩倍
 np.random.seed(0)
 
+# 2020
 candi_company_code = ['2493', '2616', '6184', '2324', '3528', '2347', '1615', '2904']
+# 2021
+candi_company_code = ['2890', '1101', '9945', '2812', '6192', '2546', '2838', '6671', '4722', '1712', '1323', '2820', '1726', '2459', '2891', '5522', '8131', '1604', '3209', '2887', '6184', '2885']
 start = '20200102'
 end = '20201231'
 money = 50000
@@ -54,7 +56,7 @@ def fitFunc(num_list):
     for i in range(len(num_list)):
         part = Decimal(f'{num_list[i]/sum(num_list)}').quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP)
         if part == 0:
-            pass
+            pass        # avoid Value error
         else:            
             # calculate total money_earn
             close_start, close_end = last_month_closing[company_code[i]][0], last_month_closing[company_code[i]][1]
@@ -66,6 +68,7 @@ def fitFunc(num_list):
             ave_SD = part * Decimal(f"{annual_SD_company[company_code[i]][0]}")
         
             fit += money_earn/ave_SD
+            
     return float(money_earn/(ave_SD**2))
             
 def evaluatePop(pop):
@@ -76,7 +79,7 @@ def selection(pop, pop_fit):
     '''Use N-tourment to select parent group'''
     a, b = [], []
     
-    for i in range(NUM_PARENT):
+    for _ in range(NUM_PARENT):
         fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
         best = np.max([pop_fit[i] for i in fit_select])
         a.append(pop[pop_fit.index(best)])
@@ -91,6 +94,7 @@ def crossover(parent, parent_fit):
     child = []
     
     for _ in range(NUM_CROSSOVER):
+        # N-tourment select parent
         fit_select = np.random.choice(NUM_CHROME, Num_pressure, replace = False)
         best = np.max([parent_fit[i] for i in fit_select])
         parent_1 = parent[parent_fit.index(best)]
@@ -99,8 +103,8 @@ def crossover(parent, parent_fit):
         best = np.max([parent_fit[i] for i in fit_select])
         parent_2 = parent[parent_fit.index(best)]
         
-        cut_point = np.random.randint(1, NUM_BIT)
-        
+        cut_point = np.random.randint(1, NUM_BIT)       # randomly decide crossover point
+        # one point crossover
         child.append(list(np.concatenate((parent_1[0:cut_point], parent_2[cut_point:NUM_BIT]), axis = 0 )))
         child.append(list(np.concatenate((parent_2[0:cut_point], parent_1[cut_point:NUM_BIT]), axis = 0 )))
     
@@ -131,8 +135,7 @@ def replace(pop, pop_fit, offspring, offspring_fit):
     return tmp[:NUM_CHROME], list(tmp_fit[:NUM_CHROME])
 
 def Annual_SD_cal(com_code):
-    '''Calculate annual_SD of each stock
-    https://reurl.cc/KppLr9'''
+    '''Calculate annual_SD of each stock'''
     annual_SD = defaultdict(list)
     monthly_SD = defaultdict(list)
     for code in com_code:
@@ -140,8 +143,8 @@ def Annual_SD_cal(com_code):
             month_start, month_end = get_close_from_db(code, month)            
             monthly_SD[code].append((month_end - month_start) / month_start)
         company_SD = np.std(np.array(monthly_SD[code]), ddof = 1)
-        print(f'company_code:{company_SD}')
         annual_SD[code].append(sqrt((company_SD**2)*12).real)
+        
     return annual_SD
 
 def get_last_month_close(com_code):
@@ -164,15 +167,14 @@ def GA_main(candi_company_code, start, end):
     db = sqlite3.connect(f'{start_date}_{end_date}.db')
     time_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(end_date))
     last_month = time_tmp.group(2)
-    annual_SD_company = Annual_SD_cal(candi_company_code)
-    print(annual_SD_company)
-    last_month_closing = get_last_month_close(candi_company_code)
+    annual_SD_company = Annual_SD_cal(candi_company_code)           # store ASD in list for faster data reading
+    last_month_closing = get_last_month_close(candi_company_code)   # store last month closing price for each company for faster data reading
     
     pop = init_pop(NUM_BIT)         # initialize population
     pop_fit = evaluatePop(pop)      #calculate fitness
     
     for i in range(iteration):
-        print(f'Iteration : {i}')
+        # print(f'Iteration : {i}')
         parent, parent_fit = selection(pop, pop_fit)
         offspring = crossover(parent, parent_fit)
         mutation(offspring)

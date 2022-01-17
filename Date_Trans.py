@@ -51,7 +51,3 @@ def time_for_yahoo(start_time, end_time):
     period_2 = (end_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411
     
     return period_1, period_2
-
-def trans_time_for_db(time):
-    date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(time))
-    return f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'

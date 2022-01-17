@@ -15,9 +15,7 @@ def regexp_db( expr, item):
 def Select(start, end, gap) :        
     """Get data from twse. select company"""
     date_list_week = date_trans(start, end, gap)
-    all_company = []           # each item is a list stored company 
     all_company_code = []      # each item is a list stored company code
-    candi_company_dic = {}     # {$code : $name} for company matched with requirement
     try:
         os.mkdir("daily_data")
     except:
@@ -70,7 +68,6 @@ def Select(start, end, gap) :
     clos_price_all = defaultdict(list)      # store only last day close price for every month
     ave_close_price_60 = defaultdict(list)
     ave_close_price_120 = defaultdict(list)
-    candi_company = []
     company_code_tmp =[]
     period_1, period_2 = time_for_yahoo(start, end)
     
@@ -139,4 +136,4 @@ def Select(start, end, gap) :
     return candi_company_code
         
 if __name__ == '__main__':
-    candi_company_dic = Select(20200102, 20201231, 7)
+    candi_company_dic = Select(20210104, 20211231, 7)
