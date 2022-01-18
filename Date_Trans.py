@@ -1,5 +1,6 @@
 import re
 import datetime
+import pandas as pd
 
 def date_trans(start, end, gap) : 
     big_month = [1, 3, 5, 7, 8, 10, 12]
@@ -51,3 +52,14 @@ def time_for_yahoo(start_time, end_time):
     period_2 = (end_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411
     
     return period_1, period_2
+
+def isweekend(date):
+    '''test if the date is weekend'''
+    date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(date))
+    date_str = f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'
+    weekday = pd.Timestamp(date_str)
+    
+    if weekday.dayofweek == 6 or weekday.dayofweek == 7:
+        return 1
+    else :
+        return 0
