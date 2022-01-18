@@ -20,7 +20,7 @@ NUM_PARENT = NUM_CHROME                         # 父母的個數
 Num_pressure = int(pressure * NUM_CHROME)       
 NUM_CROSSOVER = int(Pc * NUM_CHROME / 2)        # 交配的次數
 NUM_CROSSOVER_2 = NUM_CROSSOVER*2               # 上數的兩倍
-np.random.seed(0)
+# np.random.seed(0)
 
 # 2020
 candi_company_code = ['2493', '2616', '6184', '2324', '3528', '2347', '1615', '2904']

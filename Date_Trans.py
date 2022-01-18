@@ -2,39 +2,6 @@ import re
 import datetime
 import pandas as pd
 
-def date_trans(start, end, gap) : 
-    big_month = [1, 3, 5, 7, 8, 10, 12]
-    small_month = [4, 6, 9, 11]
-    time_list_week = []
-    
-    while int(start) <= int(end):           
-        date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(start))
-        year = int(date_tmp.group(1))
-        month = int(date_tmp.group(2))
-        day = int(date_tmp.group(3))
-        
-        if (month in big_month) and (day > 31):
-            month += 1
-            day = day - 31
-        elif (month in small_month) and (day > 30):
-            month += 1
-            day = day - 30
-        elif (month == 2):
-            if (int(year) % 4 == 0) and (day > 29):
-                month += 1
-                day = day - 29
-            elif (int(year) % 4 != 0) and (day > 28):
-                month += 1
-                day = day - 28
-        if (month > 12):
-            year += 1
-            month = 1
-        time_list_week.append(f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}')
-        day += gap
-        start = f'{str(year).zfill(4)}{str(month).zfill(2)}{str(day).zfill(2)}'
-        
-    return time_list_week
-
 def time_for_yahoo(start_time, end_time):
     """Yahoo website need time with special form"""
     # https://chenchenhouse.com/python002/
@@ -63,3 +30,41 @@ def isweekend(date):
         return 1
     else :
         return 0
+    
+def gen_date_list(start, end, gap):
+    '''gen date list for greping data from twse'''    
+    date_str_start = datetime.datetime.strptime(str(start), '%Y%m%d')
+    date_str_end = datetime.datetime.strptime(str(end), '%Y%m%d')
+    
+    date_list = []
+    date_list.append(date_str_start.strftime('%Y%m%d'))
+    
+    while date_str_start < date_str_end:
+        # add day gap
+        date_str_start += datetime.timedelta(days=gap)
+        date_list.append(date_str_start.strftime('%Y%m%d'))
+    
+    return date_list
+
+def gen_backtesting_date_list(startdate, enddate, reselection_gap):
+    date_list = []          
+    while (startdate + 60 )< enddate:       # +60 avoid month gap error
+        #[start_date_for_selection, end_date_for_selection, buy_stock_day]        
+        # selection start day => one year before buy_stock_day
+        date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(startdate))
+        start_date_for_sel = int(f'{int(date_tmp.group(1))-1}{date_tmp.group(2)}{date_tmp.group(3)}')
+        
+        # selection end day => one day before buy_stock_day
+        end_date_for_sel = datetime.datetime.strptime(str(startdate), '%Y%m%d')
+        end_date_for_sel -= datetime.timedelta(days=1)
+        end_date_for_sel = int(end_date_for_sel.strftime('%Y%m%d'))
+        
+        date_list.append([start_date_for_sel, end_date_for_sel, startdate])
+        
+        # next buy stock day => startdate += reselection_gap
+        next_month = (int(date_tmp.group(2))+reselection_gap) % 12
+        if next_month  == 0:
+            next_month = 12
+        startdate = int(f'{date_tmp.group(1)}{str(next_month).zfill(2)}{date_tmp.group(3)}')
+    
+    return date_list

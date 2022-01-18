@@ -3,7 +3,7 @@ import pandas as pd
 import re, os
 import time
 from collections import defaultdict
-from Date_Trans import date_trans, time_for_yahoo
+from Date_Trans import gen_date_list, time_for_yahoo
 import sqlite3
 
 """Get daily stock data, and list all stock matched with requirements"""
@@ -12,9 +12,9 @@ def regexp_db( expr, item):
     reg = re.compile(expr)
     return reg.search(item) is not None
 
-def Select(start, end, gap) :        
+def Select(start, end, gap = 7) :        
     """Get data from twse. select company"""
-    date_list_week = date_trans(start, end, gap)
+    date_list = gen_date_list(start, end, gap)
     all_company_code = []      # each item is a list stored company code
     
     if not os.path.exists("daily_data"):
@@ -33,7 +33,7 @@ def Select(start, end, gap) :
             }
     
     """Get data from twse. select PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
-    for date in date_list_week:
+    for date in date_list:
         # print(f'Collecting {date} data from website')
         try:                
             # get data from website and transfer into dataframe
