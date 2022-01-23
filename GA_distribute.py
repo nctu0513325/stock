@@ -203,8 +203,6 @@ def GA_main(candi_company_code, start, end, invest_money):
     stop_time = time.process_time()
     # print(f'time : {stop_time-start_time}')
     
-    # count 
-    
     stock_distribute = defaultdict(int)
     for i in range(len(company_code)):
         stock_distribute[company_code[i]] = pop[0][i]/sum(pop[0])
