@@ -27,13 +27,12 @@ candi_company_code = ['2493', '2616', '6184', '2324', '3528', '2347', '1615', '2
 # candi_company_code = ['2890', '1101', '9945', '2812', '6192', '2546', '2838', '6671', '4722', '1712', '1323', '2820', '1726', '2459', '2891', '5522', '8131', '1604', '3209', '2887', '6184', '2885']
 start = '20200102'
 end = '20201231'
-money = 50000
 # ============== function ==================
 def  init_pop() :
     '''Initialize population'''
     pop =[]
     tmp = np.zeros(NUM_BIT, int)
-    pnt = np.random.choice(NUM_BIT, 4)
+    pnt = np.random.choice(NUM_BIT, num_of_stock)
     for _ in range(NUM_CHROME):
         for i in pnt:
             tmp[i] = np.random.randint(low = 1, high = 10, size = 1)[0]
@@ -170,11 +169,11 @@ def get_last_month_close(com_code):
     
     return last_closing
  
-def GA_main(candi_company_code, start, end):
+def GA_main(candi_company_code, start, end, invest_money):
     # Initialize parameter
     start_time = time.process_time()
-    global company_code, start_date, end_date, NUM_BIT, NUM_MUTATION, db, last_month, last_month_closing, annual_SD_company
-    start_date, end_date, company_code = start, end, candi_company_code 
+    global company_code, start_date, end_date, NUM_BIT, NUM_MUTATION, db, last_month, last_month_closing, annual_SD_company, num_of_stock, money
+    start_date, end_date, company_code, money = start, end, candi_company_code, invest_money
     NUM_BIT = len(company_code)
     NUM_MUTATION = int(Pm * NUM_CHROME * NUM_BIT)
     db = sqlite3.connect(f'{start_date}_{end_date}.db')
@@ -183,6 +182,12 @@ def GA_main(candi_company_code, start, end):
     annual_SD_company = Annual_SD_cal(candi_company_code)           # store ASD in list for faster data reading
     last_month_closing = get_last_month_close(candi_company_code)   # store last month closing price for each company for faster data reading
     
+    # invest 4 stock at most
+    if NUM_BIT > 4 :
+        num_of_stock = 4 
+    else :
+        num_of_stock = NUM_BIT
+        
     pop = init_pop()         # initialize population
     pop_fit = evaluatePop(pop)      #calculate fitness
     
@@ -194,10 +199,19 @@ def GA_main(candi_company_code, start, end):
         offspring_fit = evaluatePop(offspring)
         pop, pop_fit = replace(pop, pop_fit, offspring, offspring_fit)
         
-    print(f'pop:{pop[0]} pop_fit:{pop_fit[0]}')
-    db.close()
+    # print(f'pop:{pop[0]} pop_fit:{pop_fit[0]}')
     stop_time = time.process_time()
-    print(f'time : {stop_time-start_time}')
+    # print(f'time : {stop_time-start_time}')
+    
+    # count 
+    
+    stock_distribute = defaultdict(int)
+    for i in range(len(company_code)):
+        stock_distribute[company_code[i]] = pop[0][i]/sum(pop[0])
+    
+    db.close()
+    
+    return stock_distribute
 
 if __name__ == '__main__':
     GA_main(candi_company_code, start, end)

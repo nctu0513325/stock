@@ -3,7 +3,7 @@ import pandas as pd
 import re, os
 import time
 from collections import defaultdict
-from Date_Trans import gen_date_list, time_for_yahoo
+from Date_Trans import gen_date_list, time_for_yahoo, isweekend
 import sqlite3
 
 """Get daily stock data, and list all stock matched with requirements"""
@@ -14,6 +14,8 @@ def regexp_db( expr, item):
 
 def Select(start, end, gap = 7) :        
     """Get data from twse. select company"""
+    while isweekend(start):
+        start += 1
     date_list = gen_date_list(start, end, gap)
     all_company_code = []      # each item is a list stored company code
     
@@ -62,7 +64,6 @@ def Select(start, end, gap = 7) :
             print(f'{date} is holiday, no data.')
             
     candi_company_code = list(set(all_company_code[0]).intersection(*all_company_code[1:]))
-    print(candi_company_code)
 
     """Get closing price from twse and sel by closing price > ave(60) ave(120) """
     clos_price_all = defaultdict(list)      # store only last day close price for every month
@@ -131,8 +132,8 @@ def Select(start, end, gap = 7) :
             company_code_tmp.append(company_code)
         
     candi_company_code = company_code_tmp
-    print(candi_company_code)
+
     return candi_company_code
         
 if __name__ == '__main__':
-    candi_company_dic = Select(20210104, 20211231, 7)
+    candi_company_dic = Select(20200201, 20210131, 7)

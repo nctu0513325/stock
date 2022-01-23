@@ -7,18 +7,12 @@ def time_for_yahoo(start_time, end_time):
     # https://chenchenhouse.com/python002/
     initial_time_str = datetime.datetime.strptime( '1970-01-01' , '%Y-%m-%d' )
     
-    date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(start_time))
-    start_time_str = f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'
-    start_time_str = datetime.datetime.strptime( str(start_time_str) , '%Y-%m-%d' )
+    start_time_str = datetime.datetime.strptime( str(start_time) , '%Y%m%d' )
+    start_time_str -= datetime.timedelta(days=1)
     
-    date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(end_time))
-    end_time_str = f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'
-    end_time_str = datetime.datetime.strptime( str(end_time_str) , '%Y-%m-%d' )
+    end_time_str = datetime.datetime.strptime( str(end_time) , '%Y%m%d' )
     
-    period_1 = (start_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411
-    period_2 = (end_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411
-    
-    return period_1, period_2
+    return (start_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411, (end_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411
 
 def isweekend(date):
     '''test if the date is weekend'''
@@ -26,7 +20,7 @@ def isweekend(date):
     date_str = f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'
     weekday = pd.Timestamp(date_str)
     
-    if weekday.dayofweek == 6 or weekday.dayofweek == 7:
+    if weekday.dayofweek == 6 or weekday.dayofweek == 5:
         return 1
     else :
         return 0
