@@ -18,8 +18,7 @@ def get_stock_price(stock, date):
     pattern = rf"(\d*)\/{tmp.group(2)}\/{tmp.group(3)}"
     info_df = info_df[title][info_df[title[0]].str.contains(pattern, regex = True)]
     
-    return info_df[title[1]][0]
-    
+    return float(info_df[title[1]][0])
     
 def backtesting_main(startdate, end_date, reselect_gap = 1):
     '''Backtesting if the strategy is Okay'''
@@ -27,12 +26,17 @@ def backtesting_main(startdate, end_date, reselect_gap = 1):
     # parameter setting
     stock_code = []
     stock_buy = {}
-    money = 50000
+    money_cash = 50000
     
     for date in gen_backtesting_date_list(startdate, end_date, reselect_gap):
         # date = [start_date_for_selection, end_date_for_selection, buy_stock_day]
+        
+        money_today = money_cash
+        for stock in stock_buy.keys():
+            money_today += get_stock_price(stock, date[2]) * int(stock_buy[stock])
+            
         stock_code_new = Select(date[0], date[1])
-        stock_buy_new = GA_main(stock_code_new, date[0], date[1], money)
+        stock_buy_new = GA_main(stock_code_new, date[0], date[1], money_cash)
         
         time_tmp = re.search(r'(\d\d\d\d)(\d\d\d\d)', str(date[2]))
         
