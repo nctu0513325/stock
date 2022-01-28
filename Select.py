@@ -14,8 +14,6 @@ def regexp_db( expr, item):
 
 def Select(start, end, gap = 7) :        
     """Get data from twse. select company"""
-    while isweekend(start):
-        start += 1
     date_list = gen_date_list(start, end, gap)
     all_company_code = []      # each item is a list stored company code
     
@@ -85,6 +83,7 @@ def Select(start, end, gap = 7) :
         # store data in sqlite to select data 
         db = sqlite3.connect(f'{start}_{end}.db')
         cursor = db.cursor()
+        os.chmod(f'{os.path.abspath(os.getcwd())}', 664)
         info_df.to_sql(f'daily_{company_code}', db, if_exists='append', index=False)
         db.commit()
         db.create_function("REGEXP", 2, regexp_db)
