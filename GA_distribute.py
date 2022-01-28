@@ -67,7 +67,8 @@ def fitFunc(num_list):
         else:            
             # calculate total money_earn
             close_start, close_end = last_month_closing[company_code[i]][0], last_month_closing[company_code[i]][1]
-            split_money = Decimal(f'{part*money}').quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP)
+            money_de = Decimal(f'{money}')
+            split_money = Decimal(f'{part*money_de}').quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP)
             num_of_stock = round(split_money/close_start, 0)       # num of stock can buy 
             money_earn = num_of_stock*(close_end - close_start)    # money can earn
             
@@ -192,7 +193,7 @@ def GA_main(candi_company_code, start, end, invest_money):
     pop_fit = evaluatePop(pop)      #calculate fitness
     
     for i in range(iteration):
-        print(f'Iteration : {i}')
+        #print(f'Iteration : {i}')
         parent, parent_fit = selection(pop, pop_fit)
         offspring = crossover(parent, parent_fit)
         mutation(offspring)
@@ -203,12 +204,13 @@ def GA_main(candi_company_code, start, end, invest_money):
     stop_time = time.process_time()
     # print(f'time : {stop_time-start_time}')
     
-    stock_distribute = defaultdict(int)
+    stock_distribute = defaultdict(float)
     for i in range(len(company_code)):
         stock_distribute[company_code[i]] = pop[0][i]/sum(pop[0])
     
     db.close()
     
+    # return money distribution on each stock ( dict )
     return stock_distribute
 
 if __name__ == '__main__':
