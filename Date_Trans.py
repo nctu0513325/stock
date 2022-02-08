@@ -18,7 +18,6 @@ def isweekend(date):
     '''test if the date is weekend'''
     date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(date))
     date_str = f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'
-    print(date_str)
     weekday = pd.Timestamp(date_str)
     
     if weekday.dayofweek == 6 or weekday.dayofweek == 5:
