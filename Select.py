@@ -7,19 +7,8 @@ from Date_Trans import gen_date_list, time_for_yahoo, isweekend
 import sqlite3
 
 """Get daily stock data, and list all stock matched with requirements"""
-    
-def regexp_db( expr, item):
-    reg = re.compile(expr)
-    return reg.search(item) is not None
 
-def Select(start, end, gap = 7) :        
-    """Get data from twse. select company"""
-    date_list = gen_date_list(start, end, gap)
-    all_company_code = []      # each item is a list stored company code
-    
-    if not os.path.exists("daily_data"):
-        os.mkdir("daily_data")
-       
+class headers():
     my_headers = {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9", 
                 "Accept-Encoding": "gzip, deflate, br", 
@@ -32,6 +21,18 @@ def Select(start, end, gap = 7) :
                 "Referer": "https://www.google.com/"  #參照位址
             }
     
+def regexp_db( expr, item):
+    reg = re.compile(expr)
+    return reg.search(item) is not None
+
+def Select(start, end, gap = 7) :        
+    """Get data from twse. select company"""
+    date_list = gen_date_list(start, end, gap)
+    all_company_code = []      # each item is a list stored company code
+    
+    if not os.path.exists("daily_data"):
+        os.mkdir("daily_data")
+    
     """Get data from twse. select PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
     for date in date_list:
         # print(f'Collecting {date} data from website')
@@ -39,7 +40,7 @@ def Select(start, end, gap = 7) :
             # get data from website and transfer into dataframe
             requests.adapters.DEFAULT_RETRIES = 5
             time.sleep(3)  # set sleep time to avoid connection error
-            r = requests.get(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date={date}&selectType=ALL', headers = my_headers)
+            r = requests.get(f'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date={date}&selectType=ALL', headers = headers.my_headers)
             requests.session().keep_alive = False
             info = [l[:-1].replace('\"','').replace("-",'-1').replace("+",'1').split(",") for l in r.text.split("\r\n")[1:-13]]
             info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
@@ -131,8 +132,8 @@ def Select(start, end, gap = 7) :
             company_code_tmp.append(company_code)
         
     candi_company_code = company_code_tmp
-
+    print(candi_company_code)
     return candi_company_code
         
 if __name__ == '__main__':
-    candi_company_dic = Select(20200201, 20210131, 7)
+    candi_company_dic = Select(20200101, 20201231, 7)

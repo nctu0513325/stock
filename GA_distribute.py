@@ -22,10 +22,10 @@ NUM_CROSSOVER_2 = NUM_CROSSOVER*2               # 上數的兩倍
 
 stock_num = 4
 # 2020
-candi_company_code = ['2493', '2616', '6184', '2324', '3528', '2347', '1615', '2904']
+candi_company_code = ['1615', '2493', '2616', '2324', '2904', '2347', '6184']
 # 2021
 # candi_company_code = ['2890', '1101', '9945', '2812', '6192', '2546', '2838', '6671', '4722', '1712', '1323', '2820', '1726', '2459', '2891', '5522', '8131', '1604', '3209', '2887', '6184', '2885']
-start = '20200102'
+start = '20200101'
 end = '20201231'
 # ============== function ==================
 def  init_pop() :
@@ -211,7 +211,8 @@ def GA_main(candi_company_code, start, end, invest_money):
     db.close()
     
     # return money distribution on each stock ( dict )
+    print(stock_distribute)
     return stock_distribute
 
 if __name__ == '__main__':
-    GA_main(candi_company_code, start, end)
+    GA_main(candi_company_code, start, end, 50000)
