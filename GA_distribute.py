@@ -125,11 +125,21 @@ def crossover(parent, parent_fit):
 def mutation(offspring):
     for _ in range(NUM_MUTATION):
         off_sel = np.random.randint(len(offspring), size = 1)[0]   # random select offspring
-        change_zero_index = np.random.choice(np.where(offspring[off_sel] == 0)[0], int(stock_num/2))        # find zero index
-        change_non_zero_index = np.random.choice(np.where(offspring[off_sel] != 0)[0], int(stock_num/2))    # find non-zero index
-        for i in range(len(change_non_zero_index)):
-            offspring[off_sel][change_non_zero_index[i]], offspring[off_sel][change_zero_index[i]] = \
-            offspring[off_sel][change_zero_index[i]], offspring[off_sel][change_non_zero_index[i]]
+        
+        if len(np.where(offspring[off_sel] == 0)) == 0:
+            # no non-selected stock -> randomly change half of the index
+            mut_index = np.random.randint(low = 0 , high = len(offspring[off_sel])-1, size = int(len(offspring[off_sel])/2))
+            mut_num = np.random.randint(low = 1, high = 10, size = 1)
+            for i in range(len(mut_index)):
+                offspring[off_sel][mut_index[i]] = mut_num[i]                
+            
+        elif len(np.where(offspring[off_sel] == 0)) != 0:
+            # having non-selected stock ->  switch zero and non-zero index
+            change_zero_index = np.random.choice(np.where(offspring[off_sel] == 0)[0], int(stock_num/2))        # find zero index
+            change_non_zero_index = np.random.choice(np.where(offspring[off_sel] != 0)[0], int(stock_num/2))    # find non-zero index
+            for i in range(len(change_non_zero_index)):
+                offspring[off_sel][change_non_zero_index[i]], offspring[off_sel][change_zero_index[i]] = \
+                offspring[off_sel][change_zero_index[i]], offspring[off_sel][change_non_zero_index[i]]
 
 def sortChrome(pop, pop_fit):
     '''sort the chrome according to fit decending'''
