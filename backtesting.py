@@ -1,12 +1,10 @@
 from Date_Trans import gen_backtesting_date_list, isweekend
 from Select import Select, headers
 from GA_distribute import GA_main
-import re
-import datetime
-import requests
+import re, time, sys, datetime, requests
 import pandas as pd
-import time
 from collections import defaultdict
+import tushare
 
 def get_stock_price(stock, date):
     r = requests.get(f'https://www.twse.com.tw/exchangeReport/STOCK_DAY_AVG?response=csv&date={date}&stockNo={stock}',headers=headers.my_headers)
@@ -21,13 +19,17 @@ def get_stock_price(stock, date):
     pattern = rf"(\d*)\/{tmp.group(2)}\/{tmp.group(3)}"
     info_df = info_df[title][info_df[title[0]].str.contains(pattern, regex = True)]
     
-    return float(info_df[title[1]][0]) 
+    try:
+        return float(info_df[title[1]][0]) 
+    except:
+        print(f'date : {date} stock:{stock}')
+        print(info_df)
+        sys.exit()
     
 def backtesting_main(startdate, end_date, reselect_gap = 1):
     '''Backtesting if the strategy is Okay'''
     
     # parameter setting
-    stock_code = []
     stock_buy = {}
     money_cash = 50000
     
@@ -54,7 +56,8 @@ def backtesting_main(startdate, end_date, reselect_gap = 1):
         stock_code_new = Select(date[0], date[1])
         stock_buy_new = GA_main(stock_code_new, date[0], date[1], money_today)       
         
-        print(stock_buy_new)
+        print(f'stock_buy_new:{stock_buy_new}')
+        print(f'total money today :{money_today}')
         # calculate new share of each stock 
         stock_buy_tmp = defaultdict(int)
         money_tmp = money_today
