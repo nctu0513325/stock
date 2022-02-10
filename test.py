@@ -15,3 +15,4 @@ from backtesting import get_stock_price
 # print(time_for_yahoo_back(20210118))
 
 get_stock_price(2330, 20200102)
+https://blog.csdn.net/lvluobo/article/details/90635655
