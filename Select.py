@@ -3,23 +3,10 @@ import pandas as pd
 import re, os
 import time
 from collections import defaultdict
-from Date_Trans import gen_date_list, time_for_yahoo, isweekend
+from Date_Trans import gen_date_list, time_for_yahoo, headers
 import sqlite3
 
 """Get daily stock data, and list all stock matched with requirements"""
-
-class headers():
-    my_headers = {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9", 
-                "Accept-Encoding": "gzip, deflate, br", 
-                "Accept-Language": "zh-TW,zh;q=0.9", 
-                "Sec-Fetch-Dest": "document", 
-                "Sec-Fetch-Mode": "navigate", 
-                "Sec-Fetch-Site": "none", 
-                "Upgrade-Insecure-Requests": "1", 
-                "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36", #使用者代理
-                "Referer": "https://www.google.com/"  #參照位址
-            }
     
 def regexp_db( expr, item):
     reg = re.compile(expr)
@@ -27,6 +14,7 @@ def regexp_db( expr, item):
 
 def Select(start, end, gap = 7) :        
     """Get data from twse. select company"""
+    print(f'Start:{start} End:{end}')
     date_list = gen_date_list(start, end, gap)
     all_company_code = []      # each item is a list stored company code
     
@@ -35,6 +23,7 @@ def Select(start, end, gap = 7) :
     
     """Get data from twse. select PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
     for date in date_list:
+        # print(f'Current Select Day :{date}')
         # print(f'Collecting {date} data from website')
         try:                
             # get data from website and transfer into dataframe
@@ -75,7 +64,7 @@ def Select(start, end, gap = 7) :
         os.remove(f'{start}_{end}.db')
     
     for company_code in candi_company_code:
-        r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=my_headers)
+        r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=headers.my_headers)
         info = [l.split(",") for l in r.text.split("\n")]
         info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
         info_df = pd.DataFrame(info_dict)
@@ -135,5 +124,5 @@ def Select(start, end, gap = 7) :
     print(candi_company_code)
     return candi_company_code
         
-if __name__ == '__main__':
-    candi_company_dic = Select(20200101, 20201231, 7)
+# if __name__ == '__main__':
+#     candi_company_dic = Select(20200101, 20201231, 7)

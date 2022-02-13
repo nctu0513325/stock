@@ -1,7 +1,22 @@
 import re
 import datetime
-import pandas as pd
+from chinese_calendar import is_workday
+from fake_useragent import UserAgent
 
+class headers():
+    my_headers = {
+                'user-agent':  UserAgent().random,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9", 
+                "Accept-Encoding": "gzip, deflate, br", 
+                "Accept-Language": "zh-TW,zh;q=0.9", 
+                "Sec-Fetch-Dest": "document", 
+                "Sec-Fetch-Mode": "navigate", 
+                "Sec-Fetch-Site": "none", 
+                "Upgrade-Insecure-Requests": "1", 
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36", #使用者代理
+                "Referer": "https://www.google.com/"  #參照位址
+            }
+    
 def time_for_yahoo(start_time, end_time):
     """Yahoo website need time with special form"""
     # https://chenchenhouse.com/python002/
@@ -13,17 +28,15 @@ def time_for_yahoo(start_time, end_time):
     end_time_str = datetime.datetime.strptime( str(end_time) , '%Y%m%d' )
     
     return (start_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411, (end_time_str - initial_time_str).days * (24 * 60 * 60 ) + 22411
-
-def isweekend(date):
-    '''test if the date is weekend'''
-    date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(date))
-    date_str = f'{date_tmp.group(1)}-{date_tmp.group(2)}-{date_tmp.group(3)}'
-    weekday = pd.Timestamp(date_str)
     
-    if weekday.dayofweek == 6 or weekday.dayofweek == 5:
-        return 1
-    else :
-        return 0
+def is_trade_day(date):
+    '''avoid no stock data'''
+    day = datetime.datetime.strptime(f'{(str(date))}', '%Y%m%d').date()
+    if is_workday(day):
+        if day.isoweekday() < 6:
+            return True
+    else:
+        return False
     
 def gen_date_list(start, end, gap):
     '''gen date list for greping data from twse'''    

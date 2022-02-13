@@ -9,24 +9,18 @@ from collections import defaultdict
 
 # ============== parameter setting ===============
 NUM_CHROME = 100        
-Pc = 0.5    				# 交配率 (代表共執行Pc*NUM_CHROME/2次交配)
-Pm = 0.5   					# 突變率 (代表共要執行Pm*NUM_CHROME*Num_of_Job次突變)
-pressure = 0.1              # N-tourment 參數
+Pc = 0.5    				# cross over rate (Total -> Pc*NUM_CHROME/2 times)
+Pm = 0.5   					# mutation rate (Total -> Pm*NUM_CHROME*Num_of_Job times)
+pressure = 0.1              # N-tourment parameter
 iteration = 3000
 
-NUM_PARENT = NUM_CHROME                         # 父母的個數
+NUM_PARENT = NUM_CHROME                         # num of parent
 Num_pressure = int(pressure * NUM_CHROME)       
-NUM_CROSSOVER = int(Pc * NUM_CHROME / 2)        # 交配的次數
-NUM_CROSSOVER_2 = NUM_CROSSOVER*2               # 上數的兩倍
+NUM_CROSSOVER = int(Pc * NUM_CHROME / 2)        # num of crossover
+NUM_CROSSOVER_2 = NUM_CROSSOVER*2               # twice of the above number
 # np.random.seed(0)
 
 stock_num = 4
-# 2020
-candi_company_code = ['1615', '2493', '2616', '2324', '2904', '2347', '6184']
-# 2021
-# candi_company_code = ['2890', '1101', '9945', '2812', '6192', '2546', '2838', '6671', '4722', '1712', '1323', '2820', '1726', '2459', '2891', '5522', '8131', '1604', '3209', '2887', '6184', '2885']
-start = '20200101'
-end = '20201231'
 # ============== function ==================
 def  init_pop() :
     '''Initialize population'''
@@ -125,15 +119,16 @@ def crossover(parent, parent_fit):
 def mutation(offspring):
     for _ in range(NUM_MUTATION):
         off_sel = np.random.randint(len(offspring), size = 1)[0]   # random select offspring
+        # print(f'0 place :{(np.where(offspring[off_sel] == 0))}')
         
-        if len(np.where(offspring[off_sel] == 0)) == 0:
+        if len(list(np.where(offspring[off_sel] == 0)[0])) == 0:
             # no non-selected stock -> randomly change half of the index
             mut_index = np.random.randint(low = 0 , high = len(offspring[off_sel])-1, size = int(len(offspring[off_sel])/2))
             mut_num = np.random.randint(low = 1, high = 10, size = 1)
             for i in range(len(mut_index)):
                 offspring[off_sel][mut_index[i]] = mut_num[i]                
             
-        elif len(np.where(offspring[off_sel] == 0)) != 0:
+        elif len(list(np.where(offspring[off_sel] == 0)[0])) != 0:
             # having non-selected stock ->  switch zero and non-zero index
             change_zero_index = np.random.choice(np.where(offspring[off_sel] == 0)[0], int(stock_num/2))        # find zero index
             change_non_zero_index = np.random.choice(np.where(offspring[off_sel] != 0)[0], int(stock_num/2))    # find non-zero index
@@ -225,4 +220,7 @@ def GA_main(candi_company_code, start, end, invest_money):
     return stock_distribute
 
 if __name__ == '__main__':
+    candi_company_code = ['2812', '2538', '1323', '2536']
+    start = '20200701'
+    end = '20210630'
     GA_main(candi_company_code, start, end, 50000)
