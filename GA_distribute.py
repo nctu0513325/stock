@@ -9,9 +9,9 @@ from collections import defaultdict
 
 # ============== parameter setting ===============
 NUM_CHROME = 100        
-Pc = 0.5    				# cross over rate (Total -> Pc*NUM_CHROME/2 times)
-Pm = 0.5   					# mutation rate (Total -> Pm*NUM_CHROME*Num_of_Job times)
-pressure = 0.1              # N-tourment parameter
+Pc = 0.5    				                    # cross over rate (Total -> Pc*NUM_CHROME/2 times)
+Pm = 0.5   					                    # mutation rate (Total -> Pm*NUM_CHROME*Num_of_Job times)
+pressure = 0.1                                  # N-tourment parameter
 iteration = 3000
 
 NUM_PARENT = NUM_CHROME                         # num of parent
@@ -20,7 +20,6 @@ NUM_CROSSOVER = int(Pc * NUM_CHROME / 2)        # num of crossover
 NUM_CROSSOVER_2 = NUM_CROSSOVER*2               # twice of the above number
 # np.random.seed(0)
 
-stock_num = 4
 # ============== function ==================
 def  init_pop() :
     '''Initialize population'''
@@ -130,8 +129,8 @@ def mutation(offspring):
             
         elif len(list(np.where(offspring[off_sel] == 0)[0])) != 0:
             # having non-selected stock ->  switch zero and non-zero index
-            change_zero_index = np.random.choice(np.where(offspring[off_sel] == 0)[0], int(stock_num/2))        # find zero index
-            change_non_zero_index = np.random.choice(np.where(offspring[off_sel] != 0)[0], int(stock_num/2))    # find non-zero index
+            change_zero_index = np.random.choice(np.where(offspring[off_sel] == 0)[0], int(num_of_stock/2))        # find zero index
+            change_non_zero_index = np.random.choice(np.where(offspring[off_sel] != 0)[0], int(num_of_stock/2))    # find non-zero index
             for i in range(len(change_non_zero_index)):
                 offspring[off_sel][change_non_zero_index[i]], offspring[off_sel][change_zero_index[i]] = \
                 offspring[off_sel][change_zero_index[i]], offspring[off_sel][change_non_zero_index[i]]
