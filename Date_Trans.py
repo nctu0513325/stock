@@ -75,6 +75,5 @@ def gen_backtesting_date_list(startdate, enddate, reselection_gap):
         if next_month  == 0:
             next_month = 12
         startdate = int(f'{date_tmp.group(1)}{str(next_month).zfill(2)}{date_tmp.group(3)}')
-        print(f'start:{startdate} end:{enddate}')
     
     return date_list
