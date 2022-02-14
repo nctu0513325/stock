@@ -54,8 +54,10 @@ def gen_date_list(start, end, gap):
     return date_list
 
 def gen_backtesting_date_list(startdate, enddate, reselection_gap):
-    date_list = []          
-    while (startdate + 60 )< enddate:       # +60 avoid month gap error
+    date_list = []       
+    test_date = 0   
+    while (test_date + 60 )< enddate:       # +60 avoid month gap error
+        test_date = startdate
         #[start_date_for_selection, end_date_for_selection, buy_stock_day]        
         # selection start day => one year before buy_stock_day
         date_tmp = re.search(r'(\d\d\d\d)(\d\d)(\d\d)', str(startdate))
@@ -73,5 +75,6 @@ def gen_backtesting_date_list(startdate, enddate, reselection_gap):
         if next_month  == 0:
             next_month = 12
         startdate = int(f'{date_tmp.group(1)}{str(next_month).zfill(2)}{date_tmp.group(3)}')
+        print(f'start:{startdate} end:{enddate}')
     
     return date_list

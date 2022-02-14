@@ -17,4 +17,4 @@ from backtesting import get_stock_price
 
 # get_stock_price(2330, 20200102)
 # https://blog.csdn.net/lvluobo/article/details/90635655
-get_stock_price(2330, 20210301)
+print(gen_backtesting_date_list(20210101, 20211231, 1))

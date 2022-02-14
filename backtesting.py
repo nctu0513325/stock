@@ -33,7 +33,7 @@ def backtesting_main(startdate, end_date, reselect_gap = 1):
     
     # parameter setting
     stock_buy_share = {}
-    money_cash = 50000
+    money_cash = 40000
     
     for date in gen_backtesting_date_list(startdate, end_date, reselect_gap):
         # date = [start_date_for_selection, end_date_for_selection, buy_stock_day]
