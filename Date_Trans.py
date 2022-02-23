@@ -1,11 +1,11 @@
 import re
 import datetime
 from chinese_calendar import is_workday
-from fake_useragent import UserAgent
+# from fake_useragent import UserAgent
 
 class headers():
     my_headers = {
-                'user-agent':  UserAgent().random,
+                # 'user-agent':  UserAgent().random,
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9", 
                 "Accept-Encoding": "gzip, deflate, br", 
                 "Accept-Language": "zh-TW,zh;q=0.9", 
@@ -71,9 +71,15 @@ def gen_backtesting_date_list(startdate, enddate, reselection_gap):
         date_list.append([start_date_for_sel, end_date_for_sel, startdate])
         
         # next buy stock day => startdate += reselection_gap
-        next_month = (int(date_tmp.group(2))+reselection_gap) % 12
-        if next_month  == 0:
-            next_month = 12
-        startdate = int(f'{date_tmp.group(1)}{str(next_month).zfill(2)}{date_tmp.group(3)}')
+        if int(date_tmp.group(2)) == 12:
+            year = int(date_tmp.group(1)) + 1
+            next_month = 1
+        else:
+            next_month = (int(date_tmp.group(2))+reselection_gap) % 12
+            year = int(date_tmp.group(1))
+            if next_month  == 0:
+                next_month = 12
+        
+        startdate = int(f'{year}{str(next_month).zfill(2)}{date_tmp.group(3)}')
     
     return date_list

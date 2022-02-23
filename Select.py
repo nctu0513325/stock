@@ -124,5 +124,5 @@ def Select(start, end, gap = 7) :
     print(candi_company_code)
     return candi_company_code
         
-# if __name__ == '__main__':
-#     candi_company_dic = Select(20200101, 20201231, 7)
+if __name__ == '__main__':
+    candi_company_dic = Select(20200101, 20201231, 7)

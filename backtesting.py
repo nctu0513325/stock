@@ -30,7 +30,6 @@ def get_stock_price(stock, date):
     
 def backtesting_main(startdate, end_date, reselect_gap = 1):
     '''Backtesting if the strategy is Okay'''
-    
     # parameter setting
     stock_buy_share = {}
     money_cash = 10000
@@ -78,4 +77,4 @@ def backtesting_main(startdate, end_date, reselect_gap = 1):
         money_cash = money_tmp
 
 if __name__ == '__main__':
-    backtesting_main(20210101, 20220223, 1)
+    backtesting_main(20210101, 20220131, 1)
