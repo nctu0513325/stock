@@ -81,6 +81,13 @@ def Select(start, end, gap = 7) :
         
         # store monthly data in list
         for month in range(1,13):
+            # close price for the last day in every month
+            try:
+                cursor.execute(f'SELECT Close FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(month).zfill(2)}-\d\d'])
+                result = cursor.fetchall()
+                clos_price_all[company_code].append(float(result[-1][0]))
+            except:
+                continue
             # average 60 day data
             if month > 11:
                 pass
@@ -88,6 +95,7 @@ def Select(start, end, gap = 7) :
                 cursor.execute(f'SELECT avg(Close) FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-0[{str(month)},{str(month+1)}]-\d\d'])
                 result = cursor.fetchall()
                 ave_close_price_60[company_code].append(float(result[-1][0]))
+
             # average 120 day data
             if month > 9:
                 pass
@@ -96,10 +104,7 @@ def Select(start, end, gap = 7) :
                                 [f'\d\d\d\d-0[{str(month)},{str(month+1)},{str(month+2)},{str(month+3)}]-\d\d'])
                 result = cursor.fetchall()
                 ave_close_price_120[company_code].append(float(result[-1][0]))
-            # close price for the last day in every month
-            cursor.execute(f'SELECT Close FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(month).zfill(2)}-\d\d'])
-            result = cursor.fetchall()
-            clos_price_all[company_code].append(float(result[-1][0]))
+
         db.close()     # close connection with sqlite
         
         # close - ave close <-5%*close
@@ -125,4 +130,4 @@ def Select(start, end, gap = 7) :
     return candi_company_code
         
 if __name__ == '__main__':
-    candi_company_dic = Select(20200101, 20201231, 7)
+    candi_company_dic = Select(20200401, 20210331, 7)
