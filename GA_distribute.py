@@ -219,7 +219,7 @@ def GA_main(candi_company_code, start, end, invest_money):
     return stock_distribute
 
 if __name__ == '__main__':
-    candi_company_code = ['2812', '2538', '1323', '2536']
-    start = '20200701'
-    end = '20210630'
+    candi_company_code =['8131', '2820', '1726', '2459', '6671', '1323', '1604']
+    start = '20210301'
+    end = '20220331'
     GA_main(candi_company_code, start, end, 50000)

@@ -64,6 +64,8 @@ def Select(start, end, gap = 7) :
         os.remove(f'{start}_{end}.db')
     
     for company_code in candi_company_code:
+        if company_code == '2823':
+            continue
         r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=headers.my_headers)
         info = [l.split(",") for l in r.text.split("\n")]
         info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
@@ -81,37 +83,42 @@ def Select(start, end, gap = 7) :
         
         # store monthly data in list
         for month in range(1,13):
-            # average 60 day data
-            if month > 11:
-                pass
-            else:
-                cursor.execute(f'SELECT avg(Close) FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-0[{str(month)},{str(month+1)}]-\d\d'])
+            try:
+                # average 60 day data
+                if month > 11:
+                    pass
+                else:
+                    cursor.execute(f'SELECT avg(Close) FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-0[{str(month)},{str(month+1)}]-\d\d'])
+                    result = cursor.fetchall()
+                    ave_close_price_60[company_code].append(float(result[-1][0]))
+                # average 120 day data
+                if month > 9:
+                    pass
+                else:
+                    cursor.execute(f'SELECT avg(Close) FROM daily_{company_code} WHERE Date REGEXP ?', \
+                                    [f'\d\d\d\d-0[{str(month)},{str(month+1)},{str(month+2)},{str(month+3)}]-\d\d'])
+                    result = cursor.fetchall()
+                    ave_close_price_120[company_code].append(float(result[-1][0]))
+                # close price for the last day in every month
+                cursor.execute(f'SELECT Close FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(month).zfill(2)}-\d\d'])
                 result = cursor.fetchall()
-                ave_close_price_60[company_code].append(float(result[-1][0]))
-            # average 120 day data
-            if month > 9:
-                pass
-            else:
-                cursor.execute(f'SELECT avg(Close) FROM daily_{company_code} WHERE Date REGEXP ?', \
-                                [f'\d\d\d\d-0[{str(month)},{str(month+1)},{str(month+2)},{str(month+3)}]-\d\d'])
-                result = cursor.fetchall()
-                ave_close_price_120[company_code].append(float(result[-1][0]))
-            # close price for the last day in every month
-            cursor.execute(f'SELECT Close FROM daily_{company_code} WHERE Date REGEXP ?', [f'\d\d\d\d-{str(month).zfill(2)}-\d\d'])
-            result = cursor.fetchall()
-            clos_price_all[company_code].append(float(result[-1][0]))
+                clos_price_all[company_code].append(float(result[-1][0]))
+            except:
+                ave_close_price_60[company_code].append(999)
+                ave_close_price_120[company_code].append(999)
+                clos_price_all[company_code].append(999)
         db.close()     # close connection with sqlite
         
         # close - ave close <-5%*close
         pass_flag = 1
         # ave 60:
-        for i in range(len(ave_close_price_60[company_code])):
+        for i in range(len(ave_close_price_60[company_code])-1):
             if (clos_price_all[company_code][i+1] - ave_close_price_60[company_code][i]) < -(clos_price_all[company_code][i+1]*0.05):
                 pass_flag = 0
             if pass_flag == 0:
                 break
         # ave 120:        
-        for i in range(len(ave_close_price_120[company_code])):
+        for i in range(len(ave_close_price_120[company_code])-3):
             if (clos_price_all[company_code][i+3] - ave_close_price_120[company_code][i]) < -(clos_price_all[company_code][i+3]*0.05):
                 pass_flag = 0
             if pass_flag == 0:
@@ -125,4 +132,4 @@ def Select(start, end, gap = 7) :
     return candi_company_code
         
 if __name__ == '__main__':
-    candi_company_dic = Select(20200101, 20201231, 7)
+    candi_company_dic = Select(20210301, 20220331, 7)
