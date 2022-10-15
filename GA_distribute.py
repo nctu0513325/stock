@@ -68,9 +68,9 @@ def fitFunc(num_list):
             # calculate average SD
             ave_SD = part * Decimal(f"{annual_SD_company[company_code[i]][0]}")
         
-            fit += money_earn/ave_SD
+            fit += money_earn/(ave_SD**2)
             
-    return float(money_earn/(ave_SD**2))
+    return fit
             
 def evaluatePop(pop):
     '''get list of fitness of each pop'''
@@ -219,7 +219,8 @@ def GA_main(candi_company_code, start, end, invest_money):
     return stock_distribute
 
 if __name__ == '__main__':
-    candi_company_code =['8131', '2820', '1726', '2459', '6671', '1323', '1604']
-    start = '20210301'
-    end = '20220331'
-    GA_main(candi_company_code, start, end, 50000)
+    candi_company_code =['2433', '1104', '9905', '1726', '2820', '5522', '2107', '4439', '2247', '1323']
+    start = '20210901'
+    end = '20220901'
+    for i in range(10):
+        GA_main(candi_company_code, start, end, 30000)

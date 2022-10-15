@@ -77,4 +77,4 @@ def backtesting_main(startdate, end_date, reselect_gap = 1):
         money_cash = money_tmp
 
 if __name__ == '__main__':
-    backtesting_main(20210201, 20220331, 1)
+    backtesting_main(20210201, 20220430, 1)
