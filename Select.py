@@ -16,9 +16,6 @@ def Select(start, end, gap = 7) :
     date_list = gen_date_list(start, end, gap)
     all_company_code = []      # each item is a list stored company code
     
-    if not os.path.exists("daily_data"):
-        os.mkdir("daily_data")
-    
     """Get data from twse. select PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
     for date in date_list:
         # print(f'Current Select Day :{date}')
@@ -45,10 +42,9 @@ def Select(start, end, gap = 7) :
                 tmp.append(com_code)
             all_company_code.append(tmp)
             
-            info_df.to_csv(f'daily_data/{date}.csv', encoding = 'utf_8_sig')
         except IndexError:
             print(f'{date} is holiday, no data.')
-            
+    print(all_company_code)
     candi_company_code = list(set(all_company_code[0]).intersection(*all_company_code[1:]))
 
     """Get closing price from twse and sel by closing price > ave(60) ave(120) """
@@ -71,10 +67,20 @@ def Select(start, end, gap = 7) :
         
         if (close > 0.95*EMA_100) and (close > 0.95*EMA_50) and (RSI_7d > 20) and (RSI_7d > RSI_30d):
             company_code_tmp.append(company_code)
+            
+            # Save history data for GA
+            r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=headers.my_headers)
+            info = [l.split(",") for l in r.text.split("\n")]
+            info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
+            info_df = pd.DataFrame(info_dict)
+            info_df[info_df.columns.tolist()].astype(float, errors='ignore')
+            
+            db = sqlite3.connect(f'{start}_{end}.db')
+            info_df.to_sql(f'daily_{company_code}', db, if_exists='append', index=False)
         
     candi_company_code = company_code_tmp
     print(candi_company_code)
     return candi_company_code
         
 if __name__ == '__main__':
-    candi_company_dic = Select(20211001, 20221001, 7)
+    candi_company_dic = Select(20220103, 20221231, 7)

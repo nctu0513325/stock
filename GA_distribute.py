@@ -215,12 +215,15 @@ def GA_main(candi_company_code, start, end, invest_money):
     db.close()
     
     # return money distribution on each stock ( dict )
-    print(stock_distribute)
+    for stock_no, distri in stock_distribute.items():
+        if distri != 0:
+            print(f"{stock_no}:{distri}")
+    print('\n')
     return stock_distribute
 
 if __name__ == '__main__':
-    candi_company_code =['2433', '1104', '9905', '1726', '2820', '5522', '2107', '4439', '2247', '1323']
-    start = '20210901'
-    end = '20220901'
+    candi_company_code =['2204', '3231', '3376', '8039', '6591', '1109', '2478', '2546', '2520', '4938', '1102', '2107', '2393', '1726', '6641', '1104', '8150', '1817', '4942', '2357', '2433', '5469', '2451', '8213', '2324', '1309', '2849', '6239', '1313', '3679', '1904', '1604', '6176', '1527', '6269', '2387', '3044', '2115', '2885', '3032', '2905', '2449', '2353', '9924', '2247', '2504', '2471']
+    start = '20220103'
+    end = '20221231'
     for i in range(10):
         GA_main(candi_company_code, start, end, 30000)

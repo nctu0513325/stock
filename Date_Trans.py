@@ -3,9 +3,9 @@ import datetime
 from chinese_calendar import is_workday
 from fake_useragent import UserAgent
 
-class headers():
+class headers:
     my_headers = {
-                'user-agent':  UserAgent().random,
+                # 'user-agent':  UserAgent().random,
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9", 
                 "Accept-Encoding": "gzip, deflate, br", 
                 "Accept-Language": "zh-TW,zh;q=0.9", 
