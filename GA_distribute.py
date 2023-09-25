@@ -55,9 +55,7 @@ def fitFunc(num_list):
     
     for i in range(len(num_list)):
         part = Decimal(f'{num_list[i]/sum(num_list)}').quantize(Decimal('0.0000'), rounding=decimal.ROUND_HALF_UP)
-        if part == 0:
-            pass        # avoid Value error
-        else:            
+        if part != 0:
             # calculate total money_earn
             close_start, close_end = last_month_closing[company_code[i]][0], last_month_closing[company_code[i]][1]
             money_de = Decimal(f'{money}')
@@ -218,12 +216,13 @@ def GA_main(candi_company_code, start, end, invest_money):
     for stock_no, distri in stock_distribute.items():
         if distri != 0:
             print(f"{stock_no}:{distri}")
+    print(pop_fit[0])
     print('\n')
     return stock_distribute
 
 if __name__ == '__main__':
-    candi_company_code =  ['3036', '5244', '6189', '5519', '3044', '3607', '4439', '2449', '6807', '3028', '5469', '4942', '1102', '1527', '4560', '4930', '8103', '2478', '6278', '8163', '3702', '3376', '3033', '2387', '3312', '2520', '6239', '9938', '1535', '4935', '2439', '2027', '2812', '8213', '2459', '3543', '2617', '2441', '9927', '2414', '6191', '6201', '6257', '6464']
-    start = '20220708'
-    end = '20230710'
+    candi_company_code = ['2387', '8213', '2006', '2520', '2535', '6257', '2472', '2211', '2474', '4930', '6176', '8103', '2496', '4942', '6201', '2852', '6807', '1339', '3010', '2636', '3376', '4935', '5533', '6278', '3679', '2347', '6239', '2850', '6189']
+    start = '20220914'
+    end = '20230913'
     for i in range(10):
-        GA_main(candi_company_code, start, end, 30000)
+        GA_main(candi_company_code, start, end, 410000)

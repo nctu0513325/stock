@@ -83,4 +83,4 @@ def Select(start, end, gap = 7) :
     return candi_company_code
         
 if __name__ == '__main__':
-    candi_company_dic = Select(20220708, 20230710, 7)
+    candi_company_dic = Select(20220914, 20230913, 7)
