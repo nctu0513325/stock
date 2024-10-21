@@ -3,6 +3,7 @@ import pandas as pd
 from collections import defaultdict
 from trade_view import trade_view
 from Date_Trans import gen_date_list, time_for_yahoo, headers
+from GA_distribute import GA_main
 
 """Get daily stock data, and list all stock matched with requirements"""
     
@@ -81,6 +82,13 @@ def Select(start, end, gap = 7) :
     candi_company_code = company_code_tmp
     print(candi_company_code)
     return candi_company_code
-        
+          
 if __name__ == '__main__':
-    candi_company_dic = Select(20220914, 20230913, 7)
+    start = 20231018
+    end = 20241018
+    candi_company_code = Select(start, end, 7)
+    # candi_company_code = ['5546', '2303', '2603', '2006']
+
+    
+    for i in range(10):
+        GA_main(candi_company_code, str(start), str(end), 800000)

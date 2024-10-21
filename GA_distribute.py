@@ -186,8 +186,8 @@ def GA_main(candi_company_code, start, end, invest_money):
     last_month_closing = get_last_month_close(candi_company_code)   # store last month closing price for each company for faster data reading
     
     # invest 4 stock at most
-    if NUM_BIT > 4 :
-        num_of_stock = 4 
+    if NUM_BIT > 3 :
+        num_of_stock = 3 
     else :
         num_of_stock = NUM_BIT
         
@@ -216,13 +216,13 @@ def GA_main(candi_company_code, start, end, invest_money):
     for stock_no, distri in stock_distribute.items():
         if distri != 0:
             print(f"{stock_no}:{distri}")
-    print(pop_fit[0])
+    print(float(pop_fit[0])/1e6)
     print('\n')
     return stock_distribute
 
 if __name__ == '__main__':
-    candi_company_code = ['2387', '8213', '2006', '2520', '2535', '6257', '2472', '2211', '2474', '4930', '6176', '8103', '2496', '4942', '6201', '2852', '6807', '1339', '3010', '2636', '3376', '4935', '5533', '6278', '3679', '2347', '6239', '2850', '6189']
-    start = '20220914'
-    end = '20230913'
+    candi_company_code = ['1108', '1109', '2617', '2636', '1817', '2603', '4942', '1102', '6278', '3501', '6807', '4930']
+    start = '20230515'
+    end = '20240515'
     for i in range(10):
-        GA_main(candi_company_code, start, end, 410000)
+        GA_main(candi_company_code, start, end, 420000)
