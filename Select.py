@@ -86,8 +86,8 @@ def Select(start, end, gap = 7) :
 if __name__ == '__main__':
     start = 20231018
     end = 20241018
-    candi_company_code = Select(start, end, 7)
-    # candi_company_code = ['5546', '2303', '2603', '2006']
+    # candi_company_code = Select(start, end, 7)
+    candi_company_code = ['5546', '2303', '2603', '2006']
 
     
     for i in range(10):
