@@ -18,8 +18,7 @@ class headers:
             }
     
 def time_for_yahoo(start_time, end_time):
-    """Yahoo website need time with special form"""
-    # https://chenchenhouse.com/python002/
+    """ Yahoo website need time with special form """
     initial_time_str = datetime.datetime.strptime( '1970-01-01' , '%Y-%m-%d' )
     
     start_time_str = datetime.datetime.strptime( str(start_time) , '%Y%m%d' )

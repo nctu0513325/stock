@@ -1,5 +1,6 @@
-import re, os, time, sqlite3, requests
+import re, os, time, sqlite3, requests, json
 import pandas as pd
+from datetime import datetime
 from collections import defaultdict
 from trade_view import trade_view
 from Date_Trans import gen_date_list, time_for_yahoo, headers
@@ -12,12 +13,12 @@ def regexp_db( expr, item):
     return reg.search(item) is not None
 
 def Select(start, end, gap = 7) :        
-    """Get data from twse. select company"""
+    """ Get data from twse. select company """
     print(f'Start:{start} End:{end}')
     date_list = gen_date_list(start, end, gap)
     all_company_code = []      # each item is a list stored company code
     
-    """Get data from twse. select PE for 本益比, Yeild for  殖利率, PB for 淨值比"""
+    """ Get data from twse. select PE for 本益比, Yeild for  殖利率, PB for 淨值比 """
     for date in date_list:
         # print(f'Current Select Day :{date}')
         # print(f'Collecting {date} data from website')
@@ -48,7 +49,7 @@ def Select(start, end, gap = 7) :
     print(all_company_code)
     candi_company_code = list(set(all_company_code[0]).intersection(*all_company_code[1:]))
 
-    """Get closing price from twse and sel by closing price > ave(60) ave(120) """
+    """ Get closing price from twse and sel by closing price > ave(60) ave(120) """
     company_code_tmp =[]
     period_1, period_2 = time_for_yahoo(start, end)
     
@@ -70,12 +71,16 @@ def Select(start, end, gap = 7) :
             company_code_tmp.append(company_code)
             
             # Save history data for GA
-            r = requests.get(f'https://query1.finance.yahoo.com/v7/finance/download/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=headers.my_headers)
-            info = [l.split(",") for l in r.text.split("\n")]
-            info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
-            info_df = pd.DataFrame(info_dict)
+            r = requests.get(f'https://query1.finance.yahoo.com/v8/finance/chart/{company_code}.TW?period1={period_1}&period2={period_2}&interval=1d&events=history&includeAdjustedClose=true' ,headers=headers.my_headers)
+            # info = [l.split(",") for l in r.text.split("\n")]
+            # info_dict = {z[0] : list(z[1:]) for z in zip(*info)}
+            info_dict = json.loads(r.text)
+            info_df = pd.DataFrame(info_dict['chart']['result'][0]['indicators']['quote'][0])
+
+            # trans time stamps
+            date_timestamps = [datetime.utcfromtimestamp(_).strftime('%Y-%m-%d') for _ in info_dict['chart']['result'][0]['timestamp']]
+            info_df['Date'] = date_timestamps
             info_df[info_df.columns.tolist()].astype(float, errors='ignore')
-            
             db = sqlite3.connect(f'{start}_{end}.db')
             info_df.to_sql(f'daily_{company_code}', db, if_exists='append', index=False)
         
@@ -86,8 +91,8 @@ def Select(start, end, gap = 7) :
 if __name__ == '__main__':
     start = 20231018
     end = 20241018
-    # candi_company_code = Select(start, end, 7)
-    candi_company_code = ['5546', '2303', '2603', '2006']
+    candi_company_code = Select(start, end, 7)
+    # candi_company_code = ['1102', '5546', '2603', '1530', '4930', '2409']
 
     
     for i in range(10):
